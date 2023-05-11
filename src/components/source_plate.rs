@@ -25,7 +25,8 @@ pub fn SourcePlate(cx: Scope<SourcePlateProps>) -> Element {
         style {
             vec![STYLE].into_iter().map(|s| rsx!{s}) // This is stupid
         }
-        PlateSelectionIndicator {}
+        SourcePlateSelectionIndicator {}
+        SourcePlateSelectionController {}
         table {
             draggable: "false",
             for i in 1..=cx.props.height {
@@ -41,7 +42,7 @@ pub fn SourcePlate(cx: Scope<SourcePlateProps>) -> Element {
 }
 
 #[inline_props]
-fn SourcePlateCell(cx: Scope<PlateCellProps>, i: u8, j: u8) -> Element {
+fn SourcePlateCell(cx: Scope<PlateCellProps>, i: u8, j: u8, color: Option<String>) -> Element {
     let selection_state = use_shared_state::<SelectionState>(cx).unwrap();
     let selected = in_square(
         selection_state.read().m_start,
@@ -52,11 +53,16 @@ fn SourcePlateCell(cx: Scope<PlateCellProps>, i: u8, j: u8) -> Element {
         true => "current_select",
         false => "",
     };
+    let color_string = match color {
+        Some(c) => c.clone(),
+        None => "None".to_string()
+    };
 
     cx.render(rsx! {
         td {
             class: "plate_cell {selected_class}",
             draggable: "false",
+            style: "background: {color_string}",
             onmousedown: move |_| {
                 selection_state.write().m_start = Some((*i,*j));
                 selection_state.write().m_end = None;
@@ -85,7 +91,8 @@ fn in_square(corner1: Option<(u8, u8)>, corner2: Option<(u8, u8)>, pt: (u8, u8))
     }
 }
 
-fn PlateSelectionIndicator(cx: Scope) -> Element {
+// This is a dummy component for design purposes only
+fn SourcePlateSelectionIndicator(cx: Scope) -> Element {
     let selection_state = use_shared_state::<SelectionState>(cx).unwrap();
     let start_str = match selection_state.read().m_start {
         Some(start) => format!("{},{}", start.0, start.1),
@@ -98,5 +105,15 @@ fn PlateSelectionIndicator(cx: Scope) -> Element {
 
     cx.render(rsx! {
         p { start_str ", and " end_str }
+    })
+}
+
+fn SourcePlateSelectionController(cx: Scope) -> Element {
+    cx.render(rsx! {
+        div {
+            button {
+                "Select"
+            }
+        }
     })
 }

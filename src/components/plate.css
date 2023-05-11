@@ -10,9 +10,9 @@ td.plate_cell {
 	border: 2px solid black;
 }
 td.plate_cell:hover {
-	background: black;
+	background: black !important;
 }
 
 td.current_select {
-	background: lightblue;
+	background: lightblue !important;
 }
