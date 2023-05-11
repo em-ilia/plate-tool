@@ -1,6 +1,6 @@
 table, tr, td {
 	box-sizing: border-box;
-	user-select: none;
+	user-select: none; /* Prevents dragging issue */
 }
 td.plate_cell {
 	width: 30px;
