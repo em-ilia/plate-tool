@@ -5,12 +5,14 @@ table, tr, td {
 td.plate_cell {
 	width: 30px;
 	height: 30px;
-	background: blue;
+	background: none;
+	border-radius: 50%;
+	border: 2px solid black;
 }
 td.plate_cell:hover {
-	background: purple;
+	background: black;
 }
 
 td.current_select {
-	border: 3px solid red;
+	background: lightblue;
 }
