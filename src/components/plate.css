@@ -1,0 +1,16 @@
+table, tr, td {
+	box-sizing: border-box;
+	user-select: none;
+}
+td.plate_cell {
+	width: 30px;
+	height: 30px;
+	background: blue;
+}
+td.plate_cell:hover {
+	background: purple;
+}
+
+td.current_select {
+	border: 3px solid red;
+}
