@@ -1,7 +1,9 @@
 use plate_tool::App;
+use plate_tool::plate_test;
 use wasm_logger;
 
 fn main() {
-    wasm_logger::init(wasm_logger::Config::default());
-    dioxus_web::launch(App);
+//    wasm_logger::init(wasm_logger::Config::default());
+//    dioxus_web::launch(App);
+    plate_test();
 }

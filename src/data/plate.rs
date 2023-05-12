@@ -5,7 +5,6 @@ pub struct Plate {
 
 impl Plate {
     pub fn new(plate_type: PlateType, plate_format: PlateFormat) -> Self {
-        let (l,w) = plate_format.size();
         Plate {
             plate_type,
             plate_format,
