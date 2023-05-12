@@ -1,7 +1,6 @@
 pub struct Plate {
     pub plate_type: PlateType,
     pub plate_format: PlateFormat,
-    well_groups: Vec<u8>
 }
 
 impl Plate {
@@ -10,16 +9,11 @@ impl Plate {
         Plate {
             plate_type,
             plate_format,
-            well_groups: Vec::with_capacity((l*w) as usize)
         }
     }
 
     pub fn size(&self) -> (u8,u8) {
         self.plate_format.size()
-    }
-
-    pub fn get_well_group(&self, i: u8, j: u8) -> u8 {
-        self.well_groups[ ((i-1)*self.size().1 + (j-1)) as usize ]
     }
 }
 
@@ -54,20 +48,9 @@ impl PlateFormat {
     }
 }
 
+/*
 #[cfg(test)]
 mod tests {
     use super::{Plate, PlateFormat, PlateType};
-
-    #[test]
-    fn test_get_well_group() {
-        let plate = Plate { // Plate where we know every plate group number
-            plate_type: PlateType::Source,
-            plate_format: PlateFormat::W12,
-            well_groups: vec![1,2,3,4,5,6,7,8,9,10,11,12]
-        };
-
-        assert_eq!(plate.get_well_group(1, 3), 3);
-        assert_eq!(plate.get_well_group(2, 3), 7);
-        assert_eq!(plate.get_well_group(3, 1), 9);
-    }
 }
+*/
