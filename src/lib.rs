@@ -1,5 +1,6 @@
 #![allow(non_snake_case)]
 mod components;
+mod data;
 
 use components::source_plate::SourcePlate;
 use dioxus::prelude::*;
