@@ -11,14 +11,14 @@ impl Plate {
         }
     }
 
-    pub fn size(&self) -> (u8,u8) {
+    pub fn size(&self) -> (u8, u8) {
         self.plate_format.size()
     }
 }
 
 pub enum PlateType {
     Source,
-    Destination
+    Destination,
 }
 
 pub enum PlateFormat {
@@ -33,16 +33,16 @@ pub enum PlateFormat {
 }
 
 impl PlateFormat {
-    pub fn size(&self) -> (u8,u8) {
+    pub fn size(&self) -> (u8, u8) {
         match self {
-            PlateFormat::W6 => (2,3),
-            PlateFormat::W12 => (3,4),
-            PlateFormat::W24 => (4,6),
-            PlateFormat::W48 => (6,8),
-            PlateFormat::W96 => (8,12),
-            PlateFormat::W384 => (16,24),
-            PlateFormat::W1536 => (32,48),
-            PlateFormat::W3456 => (48,72),
+            PlateFormat::W6 => (2, 3),
+            PlateFormat::W12 => (3, 4),
+            PlateFormat::W24 => (4, 6),
+            PlateFormat::W48 => (6, 8),
+            PlateFormat::W96 => (8, 12),
+            PlateFormat::W384 => (16, 24),
+            PlateFormat::W1536 => (32, 48),
+            PlateFormat::W3456 => (48, 72),
         }
     }
 }

@@ -55,7 +55,7 @@ fn SourcePlateCell(cx: Scope<PlateCellProps>, i: u8, j: u8, color: Option<String
     };
     let color_string = match color {
         Some(c) => c.clone(),
-        None => "None".to_string()
+        None => "None".to_string(),
     };
 
     cx.render(rsx! {
@@ -126,9 +126,9 @@ mod tests {
     #[test]
     fn test_in_rect1() {
         // Test in center of rect
-        let c1 = (1,1);
-        let c2 = (10,10);
-        let pt = (5,5);
+        let c1 = (1, 1);
+        let c2 = (10, 10);
+        let pt = (5, 5);
         assert!(in_rect(Some(c1), Some(c2), pt));
         // Order of the corners should not matter:
         assert!(in_rect(Some(c2), Some(c1), pt));
@@ -137,10 +137,10 @@ mod tests {
     #[test]
     fn test_in_rect2() {
         // Test on top/bottom edges of rect
-        let c1 = (1,1);
-        let c2 = (10,10);
-        let pt1 = (1,5);
-        let pt2 = (10,5);
+        let c1 = (1, 1);
+        let c2 = (10, 10);
+        let pt1 = (1, 5);
+        let pt2 = (10, 5);
         assert!(in_rect(Some(c1), Some(c2), pt1));
         assert!(in_rect(Some(c1), Some(c2), pt2));
         // Order of the corners should not matter:
@@ -151,10 +151,10 @@ mod tests {
     #[test]
     fn test_in_rect3() {
         // Test on left/right edges of rect
-        let c1 = (1,1);
-        let c2 = (10,10);
-        let pt1 = (5,1);
-        let pt2 = (5,10);
+        let c1 = (1, 1);
+        let c2 = (10, 10);
+        let pt1 = (5, 1);
+        let pt2 = (5, 10);
         assert!(in_rect(Some(c1), Some(c2), pt1));
         assert!(in_rect(Some(c1), Some(c2), pt2));
         // Order of the corners should not matter:
@@ -164,11 +164,11 @@ mod tests {
 
     #[test]
     fn test_in_rect4() {
-    // Test cases that should fail
-        let c1 = (1,1);
-        let c2 = (10,10);
-        let pt1 = (0,0);
-        let pt2 = (15,15);
+        // Test cases that should fail
+        let c1 = (1, 1);
+        let c2 = (10, 10);
+        let pt1 = (0, 0);
+        let pt2 = (15, 15);
         assert_eq!(false, in_rect(Some(c1), Some(c2), pt1));
         assert_eq!(false, in_rect(Some(c1), Some(c2), pt2));
     }

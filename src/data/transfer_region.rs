@@ -2,14 +2,14 @@ use super::plate::Plate;
 
 #[derive(Clone, Copy)]
 pub enum Region {
-    Rect((u8,u8),(u8,u8)),
-    Point((u8,u8))
+    Rect((u8, u8), (u8, u8)),
+    Point((u8, u8)),
 }
-impl TryFrom<Region> for ((u8,u8),(u8,u8)) {
+impl TryFrom<Region> for ((u8, u8), (u8, u8)) {
     type Error = &'static str;
     fn try_from(region: Region) -> Result<Self, Self::Error> {
         if let Region::Rect(c1, c2) = region {
-            Ok((c1,c2))
+            Ok((c1, c2))
         } else {
             // Should consider returning a degenerate rectangle here instead
             Err("Cannot convert this region to a rectangle, it was a point.")
@@ -22,16 +22,16 @@ pub struct TransferRegion<'a> {
     pub source_region: Region, // Even if it is just a point, we don't want corners.
     pub dest_plate: &'a Plate,
     pub dest_region: Region,
-    pub interleave_source: Option<(i8,i8)>,
-    pub interleave_dest: Option<(i8,i8)>,
+    pub interleave_source: Option<(i8, i8)>,
+    pub interleave_dest: Option<(i8, i8)>,
 }
 
 impl TransferRegion<'_> {
-    pub fn get_source_wells(&self) -> Vec<(u8,u8)> {
+    pub fn get_source_wells(&self) -> Vec<(u8, u8)> {
         if let Region::Rect(c1, c2) = self.source_region {
-            let mut wells = Vec::<(u8,u8)>::new();
+            let mut wells = Vec::<(u8, u8)>::new();
             let (ul, br) = standardize_rectangle(&c1, &c2);
-            let (interleave_i, interleave_j) = self.interleave_source.unwrap_or((1,1));
+            let (interleave_i, interleave_j) = self.interleave_source.unwrap_or((1, 1));
             // NOTE: This will panic if either is 0!
             // We'll reassign these values (still not mutable) just in case.
             // This behaviour shouldn't be replicated for destination wells
@@ -40,21 +40,23 @@ impl TransferRegion<'_> {
 
             for i in (ul.0..=br.0).step_by(i8::abs(interleave_i) as usize) {
                 for j in (ul.1..=br.1).step_by(i8::abs(interleave_j) as usize) {
-            // NOTE: It looks like we're ignoring negative interleaves,
-            // because it wouldn't make a difference here---the same
-            // wells will still be involved in the transfer.
-                    wells.push((i,j))
+                    // NOTE: It looks like we're ignoring negative interleaves,
+                    // because it wouldn't make a difference here---the same
+                    // wells will still be involved in the transfer.
+                    wells.push((i, j))
                 }
             }
             return wells;
-        } else { panic!("Source region is just a point!") }
+        } else {
+            panic!("Source region is just a point!")
+        }
     }
-    pub fn get_destination_wells(&self) -> Vec<(u8,u8)> {
+    pub fn get_destination_wells(&self) -> Vec<(u8, u8)> {
         let map = self.calculate_map();
         let source_wells = self.get_source_wells();
 
-        let mut wells = Vec::<(u8,u8)>::new();
-        
+        let mut wells = Vec::<(u8, u8)>::new();
+
         for well in source_wells {
             if let Some(mut dest_wells) = map(well) {
                 wells.append(&mut dest_wells);
@@ -64,22 +66,23 @@ impl TransferRegion<'_> {
         return wells;
     }
 
-    pub fn calculate_map(&self) -> Box<dyn Fn((u8,u8)) -> Option<Vec<(u8,u8)>> + '_> {
+    pub fn calculate_map(&self) -> Box<dyn Fn((u8, u8)) -> Option<Vec<(u8, u8)>> + '_> {
         // By validating first, we have a stronger guarantee that
         // this function will not panic. :)
         if let Err(msg) = self.validate() {
             eprintln!("{}", msg);
             eprintln!("This transfer will be empty.");
-            return Box::new(|(_,_)| None)
+            return Box::new(|(_, _)| None);
         }
 
         let source_wells = self.get_source_wells();
-        let il_dest = self.interleave_dest.unwrap_or((1,1));
-        let il_source = self.interleave_source.unwrap_or((1,1));
+        let il_dest = self.interleave_dest.unwrap_or((1, 1));
+        let il_source = self.interleave_source.unwrap_or((1, 1));
 
-
-        let source_corners: ((u8,u8),(u8,u8)) = self.source_region.try_into()
-                                                   .expect("Source region should not be a point");
+        let source_corners: ((u8, u8), (u8, u8)) = self
+            .source_region
+            .try_into()
+            .expect("Source region should not be a point");
         let (source_ul, _) = standardize_rectangle(&source_corners.0, &source_corners.1);
         // This map is not necessarily injective or surjective,
         // but we will have these properties in certain cases.
@@ -88,59 +91,88 @@ impl TransferRegion<'_> {
 
         // Non-replicate transfers:
         match self.dest_region {
-            Region::Point((x,y)) => return Box::new(move |(i,j)| {
-                if source_wells.contains(&(i,j)) {
-                    // Validity here already checked by self.validate()
-                    Some(vec!((
-                            x + i.checked_sub(source_ul.0).expect("Point cannot have been less than UL")
-                                .checked_div(il_source.0.abs() as u8).expect("Source interleave cannot be 0")
-                                    .mul(il_dest.0.abs() as u8),
-                            y + j.checked_sub(source_ul.1).expect("Point cannot have been less than UL")
-                                .checked_div(il_source.1.abs() as u8).expect("Source interleave cannot be 0")
-                                    .mul(il_dest.1.abs() as u8),
-                            )))
-                } else { None }
-            }),
-            Region::Rect(c1, c2) => return Box::new(move |(i,j)| {
-                // Because of our call to validate,
-                // we can assume that our destination region contains
-                // an integer number of our source regions.
-                if source_wells.contains(&(i,j)) {
-                    // Find points by checking congruence class
-                    let possible_destination_wells = create_dense_rectangle(&c1, &c2);
-                    let (ds1,ds2) = standardize_rectangle(&c1, &c2);
-                    let (s1,s2) = standardize_rectangle(&source_corners.0, &source_corners.1);
-                    let dims = (s2.0.checked_sub(s1.0).unwrap()+1, s2.1.checked_sub(s1.1).unwrap()+1);
-                    let relative_ij = (i.checked_sub(source_ul.0).expect("Point cannot have been less than UL"),
-                                       j.checked_sub(source_ul.1).expect("Point cannot have been less than UL"));
-                    /*
-                    println!("{} % {} == {}", i, dims.0, i*il_dest.0.abs() as u8 % dims.0);
-                    for a in ds1.0..=ds2.0 {
-                        for b in ds1.1..=ds2.1 {
-                            println!("({},{}): {} % {} == {}", a, b,
-                            a.checked_sub(ds1.0).unwrap()+1, dims.0,
-                            (a.checked_sub(ds1.0).unwrap()+1) % dims.0);
-                        }
+            Region::Point((x, y)) => {
+                return Box::new(move |(i, j)| {
+                    if source_wells.contains(&(i, j)) {
+                        // Validity here already checked by self.validate()
+                        Some(vec![(
+                            x + i
+                                .checked_sub(source_ul.0)
+                                .expect("Point cannot have been less than UL")
+                                .checked_div(il_source.0.abs() as u8)
+                                .expect("Source interleave cannot be 0")
+                                .mul(il_dest.0.abs() as u8),
+                            y + j
+                                .checked_sub(source_ul.1)
+                                .expect("Point cannot have been less than UL")
+                                .checked_div(il_source.1.abs() as u8)
+                                .expect("Source interleave cannot be 0")
+                                .mul(il_dest.1.abs() as u8),
+                        )])
+                    } else {
+                        None
                     }
-                    for a in ds1.0..=ds2.0 {
-                        for b in ds1.1..=ds2.1 {
-                            println!("({},{}): {} % {} == {}", a, b,
-                            a.checked_sub(ds1.0).unwrap()+1, il_dest.0.abs() as u8,
-                            (a.checked_sub(ds1.0).unwrap()+1) % il_dest.0.abs() as u8);
+                });
+            }
+            Region::Rect(c1, c2) => {
+                return Box::new(move |(i, j)| {
+                    // Because of our call to validate,
+                    // we can assume that our destination region contains
+                    // an integer number of our source regions.
+                    if source_wells.contains(&(i, j)) {
+                        // Find points by checking congruence class
+                        let possible_destination_wells = create_dense_rectangle(&c1, &c2);
+                        let (ds1, ds2) = standardize_rectangle(&c1, &c2);
+                        let (s1, s2) = standardize_rectangle(&source_corners.0, &source_corners.1);
+                        let dims = (
+                            s2.0.checked_sub(s1.0).unwrap() + 1,
+                            s2.1.checked_sub(s1.1).unwrap() + 1,
+                        );
+                        let relative_ij = (
+                            i.checked_sub(source_ul.0)
+                                .expect("Point cannot have been less than UL"),
+                            j.checked_sub(source_ul.1)
+                                .expect("Point cannot have been less than UL"),
+                        );
+                        /*
+                        println!("{} % {} == {}", i, dims.0, i*il_dest.0.abs() as u8 % dims.0);
+                        for a in ds1.0..=ds2.0 {
+                            for b in ds1.1..=ds2.1 {
+                                println!("({},{}): {} % {} == {}", a, b,
+                                a.checked_sub(ds1.0).unwrap()+1, dims.0,
+                                (a.checked_sub(ds1.0).unwrap()+1) % dims.0);
+                            }
                         }
-                    }
-                    */
+                        for a in ds1.0..=ds2.0 {
+                            for b in ds1.1..=ds2.1 {
+                                println!("({},{}): {} % {} == {}", a, b,
+                                a.checked_sub(ds1.0).unwrap()+1, il_dest.0.abs() as u8,
+                                (a.checked_sub(ds1.0).unwrap()+1) % il_dest.0.abs() as u8);
+                            }
+                        }
+                        */
 
-                    Some(possible_destination_wells.into_iter()
-                        .filter(|(x,y)| i*il_dest.0.abs() as u8 % dims.0 
-                                        == (x.checked_sub(ds1.0).unwrap() + 1) % dims.0 &&
-                                        j*il_dest.1.abs() as u8 % dims.1
-                                        == (y.checked_sub(ds1.1).unwrap() + 1) % dims.1)
-                        .filter(|(x,y)| (x.checked_sub(ds1.0).unwrap()) % il_dest.0.abs() as u8 == 0 &&
-                                        (y.checked_sub(ds1.1).unwrap()) % il_dest.1.abs() as u8 == 0)
-                        .collect())
-                } else { None }
-            })
+                        Some(
+                            possible_destination_wells
+                                .into_iter()
+                                .filter(|(x, y)| {
+                                    i * il_dest.0.abs() as u8 % dims.0
+                                        == (x.checked_sub(ds1.0).unwrap() + 1) % dims.0
+                                        && j * il_dest.1.abs() as u8 % dims.1
+                                            == (y.checked_sub(ds1.1).unwrap() + 1) % dims.1
+                                })
+                                .filter(|(x, y)| {
+                                    (x.checked_sub(ds1.0).unwrap()) % il_dest.0.abs() as u8 == 0
+                                        && (y.checked_sub(ds1.1).unwrap()) % il_dest.1.abs() as u8
+                                            == 0
+                                })
+                                .collect(),
+                        )
+                    } else {
+                        None
+                    }
+                });
+            }
         }
     }
 
@@ -153,27 +185,24 @@ impl TransferRegion<'_> {
         //     - Are the wells in the source really there?
         //     - In a replication region, do the source lengths divide the destination lengths?
         //     - Are the interleaves valid?
-        let il_source = self.interleave_source.unwrap_or((1,1));
-        let il_dest = self.interleave_dest.unwrap_or((1,1));
+        let il_source = self.interleave_source.unwrap_or((1, 1));
+        let il_dest = self.interleave_dest.unwrap_or((1, 1));
 
         match self.source_region {
             Region::Point(_) => return Err("Source region should not be a point!"),
             Region::Rect(s1, s2) => {
                 // Check if all source wells exist:
-                if s1.0 == 0 || s1.1 == 0
-                    || s2.0 == 0 || s2.1 == 0 {
-                        return Err("Source region is out-of-bounds! (Too small)")
-                    }
+                if s1.0 == 0 || s1.1 == 0 || s2.0 == 0 || s2.1 == 0 {
+                    return Err("Source region is out-of-bounds! (Too small)");
+                }
                 // Sufficient to check if the corners are in-bounds
                 let source_max = self.source_plate.size();
-                if s1.0 > source_max.0 ||
-                    s2.0 > source_max.0 {
-                        return Err("Source region is out-of-bounds! (Too tall)")
-                    }
-                if s1.1 > source_max.1 ||
-                    s2.1 > source_max.1 {
-                        return Err("Source region is out-of-bounds! (Too wide)")
-                    }
+                if s1.0 > source_max.0 || s2.0 > source_max.0 {
+                    return Err("Source region is out-of-bounds! (Too tall)");
+                }
+                if s1.1 > source_max.1 || s2.1 > source_max.1 {
+                    return Err("Source region is out-of-bounds! (Too wide)");
+                }
                 // Check that source lengths divide destination lengths
                 match &self.dest_region {
                     Region::Point(_) => (),
@@ -182,27 +211,30 @@ impl TransferRegion<'_> {
                         // complicated to compute the true dimensions of
                         // each region.
                         // (dim)*(il) - (il - 1)
-                        let dest_diff_i = ((il_dest.0.abs() as u8)*u8::abs_diff(d1.0, d2.0))
-                                            .checked_sub(il_dest.0.abs() as u8 - 1)
-                                            .expect("Dimension is somehow negative?")+1;
-                        let dest_diff_j = ((il_dest.1.abs() as u8)*u8::abs_diff(d1.1, d2.1))
-                                            .checked_sub(il_dest.1.abs() as u8 - 1)
-                                            .expect("Dimension is somehow negative?")+1;
-                        let source_diff_i = ((il_source.0.abs() as u8)*u8::abs_diff(s1.0, s2.0))
-                                            .checked_sub(il_source.0.abs() as u8 - 1)
-                                            .expect("Dimension is somehow negative?")+1;
-                        let source_diff_j = ((il_source.1.abs() as u8)*u8::abs_diff(s1.1, s2.1))
-                                            .checked_sub(il_source.1.abs() as u8 - 1)
-                                            .expect("Dimension is somehow negative?")+1;
-
+                        let dest_diff_i = ((il_dest.0.abs() as u8) * u8::abs_diff(d1.0, d2.0))
+                            .checked_sub(il_dest.0.abs() as u8 - 1)
+                            .expect("Dimension is somehow negative?")
+                            + 1;
+                        let dest_diff_j = ((il_dest.1.abs() as u8) * u8::abs_diff(d1.1, d2.1))
+                            .checked_sub(il_dest.1.abs() as u8 - 1)
+                            .expect("Dimension is somehow negative?")
+                            + 1;
+                        let source_diff_i = ((il_source.0.abs() as u8) * u8::abs_diff(s1.0, s2.0))
+                            .checked_sub(il_source.0.abs() as u8 - 1)
+                            .expect("Dimension is somehow negative?")
+                            + 1;
+                        let source_diff_j = ((il_source.1.abs() as u8) * u8::abs_diff(s1.1, s2.1))
+                            .checked_sub(il_source.1.abs() as u8 - 1)
+                            .expect("Dimension is somehow negative?")
+                            + 1;
 
                         if dest_diff_i % source_diff_i != 0 {
                             eprintln!("{} {}", source_diff_i, dest_diff_i);
-                            return Err("Replicate region has indivisible height!")
+                            return Err("Replicate region has indivisible height!");
                         }
                         if dest_diff_j % source_diff_j != 0 {
                             eprintln!("{} {}", source_diff_j, source_diff_j);
-                            return Err("Replicate region has indivisible width!")
+                            return Err("Replicate region has indivisible width!");
                         }
                     }
                 }
@@ -211,55 +243,54 @@ impl TransferRegion<'_> {
 
         if let Some(source_il) = self.interleave_source {
             if source_il.0 == 0 || source_il.1 == 0 {
-                return Err("Source interleave cannot be zero!")
+                return Err("Source interleave cannot be zero!");
             }
         }
-
 
         // Check if all destination wells exist:
         // NOT IMPLEMENTED
         // Should *not* happen in this function---otherwise
         // we'd get a nasty recursive loop.
 
-
-        return Ok(())
+        return Ok(());
     }
 }
 
-fn in_region(pt: (u8,u8), r: &Region) -> bool {
+fn in_region(pt: (u8, u8), r: &Region) -> bool {
     match r {
         Region::Rect(c1, c2) => {
             pt.0 <= u8::max(c1.0, c2.0)
-            && pt.0 >= u8::min(c1.0, c2.0)
-            && pt.1 <= u8::max(c1.1, c2.1)
-            && pt.1 >= u8::min(c1.1, c2.1)
-        },
-        Region::Point((i, j)) => {
-            pt.0 == *i && pt.1 == *j
+                && pt.0 >= u8::min(c1.0, c2.0)
+                && pt.1 <= u8::max(c1.1, c2.1)
+                && pt.1 >= u8::min(c1.1, c2.1)
         }
+        Region::Point((i, j)) => pt.0 == *i && pt.1 == *j,
     }
 }
 
-fn create_dense_rectangle(c1: &(u8,u8), c2: &(u8,u8)) -> Vec<(u8,u8)> {
+fn create_dense_rectangle(c1: &(u8, u8), c2: &(u8, u8)) -> Vec<(u8, u8)> {
     // Creates a vector of every point between two corners
     let (c1, c2) = standardize_rectangle(c1, c2);
 
-    let mut points = Vec::<(u8,u8)>::new();
+    let mut points = Vec::<(u8, u8)>::new();
     for i in c1.0..=c2.0 {
         for j in c1.1..=c2.1 {
-            points.push((i,j));
+            points.push((i, j));
         }
     }
 
     return points;
 }
 
-fn standardize_rectangle(c1: &(u8,u8), c2: &(u8,u8)) -> ((u8,u8),(u8,u8)) {
+fn standardize_rectangle(c1: &(u8, u8), c2: &(u8, u8)) -> ((u8, u8), (u8, u8)) {
     let upper_left_i = u8::min(c1.0, c2.0);
     let upper_left_j = u8::min(c1.1, c2.1);
     let bottom_right_i = u8::max(c1.0, c2.0);
     let bottom_right_j = u8::max(c1.1, c2.1);
-    return ((upper_left_i,upper_left_j),(bottom_right_i,bottom_right_j));
+    return (
+        (upper_left_i, upper_left_j),
+        (bottom_right_i, bottom_right_j),
+    );
 }
 
 #[cfg(debug_assertions)]
@@ -275,7 +306,7 @@ impl fmt::Display for TransferRegion<'_> {
         let mut source_string = String::new();
         for i in 1..=source_dims.0 {
             for j in 1..=source_dims.1 {
-                if source_wells.contains(&(i,j)) {
+                if source_wells.contains(&(i, j)) {
                     source_string.push_str("x")
                 } else {
                     source_string.push_str(".")
@@ -291,7 +322,7 @@ impl fmt::Display for TransferRegion<'_> {
         let mut dest_string = String::new();
         for i in 1..=dest_dims.0 {
             for j in 1..=dest_dims.1 {
-                if dest_wells.contains(&(i,j)) {
+                if dest_wells.contains(&(i, j)) {
                     dest_string.push_str("x")
                 } else {
                     dest_string.push_str(".")
