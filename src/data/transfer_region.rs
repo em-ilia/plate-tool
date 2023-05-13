@@ -69,8 +69,6 @@ impl TransferRegion<'_> {
         let il_dest = self.interleave_dest.unwrap_or((1,1));
 
         let il_source = self.interleave_source.unwrap_or((1,1));
-        if il_source.0 == 0 { let il_source = (1,il_source.1); }
-        if il_source.1 == 0 { let il_source = (il_source.1,il_source.0); }
 
         let source_corners: ((u8,u8),(u8,u8)) = self.source_region.try_into()
                                                    .expect("Source region should not be a point");
@@ -79,22 +77,6 @@ impl TransferRegion<'_> {
         // but we will have these properties in certain cases.
         // If the transfer is not a pooling transfer (interleave == 0)
         // then we *will* have injectivity.
-
-        // First we'll handle ij-pooling transfers, since they're the simplest.
-        // NOTE: I'm going to say that these transfers always go to the primary corner,
-        // because I can't envision how an ij-pooling replicate transfer would work.
-        if il_dest == (0,0) {
-            return Box::new(move |(i,j)| { // All we're moving here is source_wells
-                if source_wells.contains(&(i,j)) {
-                    match self.dest_region {
-                        Region::Point((i0, j0)) => Some((i0,j0)),
-                        Region::Rect((i0,j0),_) => Some((i0,j0))
-                    }
-                } else {
-                    None
-                }
-                })
-        }
 
         // Non-replicate transfers:
         if let Region::Point((x,y)) = self.dest_region {
