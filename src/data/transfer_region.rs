@@ -65,10 +65,17 @@ impl TransferRegion<'_> {
     }
 
     pub fn calculate_map(&self) -> Box<dyn Fn((u8,u8)) -> Option<(u8,u8)> + '_> {
+        // By validating first, we have a stronger guarantee that
+        // this function will not panic. :)
+        if let Err(msg) = self.validate() {
+            eprintln!("{}", msg);
+            eprintln!("This transfer will be empty.");
+            return Box::new(|(_,_)| None)
+        }
+
         let source_wells = self.get_source_wells();
         let il_dest = self.interleave_dest.unwrap_or((1,1));
 
-        let il_source = self.interleave_source.unwrap_or((1,1));
 
         let source_corners: ((u8,u8),(u8,u8)) = self.source_region.try_into()
                                                    .expect("Source region should not be a point");
