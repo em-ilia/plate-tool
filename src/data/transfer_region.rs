@@ -56,15 +56,15 @@ impl TransferRegion<'_> {
         let mut wells = Vec::<(u8,u8)>::new();
         
         for well in source_wells {
-            if let Some(dest_well) = map(well) {
-                wells.push(dest_well)
+            if let Some(mut dest_wells) = map(well) {
+                wells.append(&mut dest_wells);
             }
         }
 
         return wells;
     }
 
-    pub fn calculate_map(&self) -> Box<dyn Fn((u8,u8)) -> Option<(u8,u8)> + '_> {
+    pub fn calculate_map(&self) -> Box<dyn Fn((u8,u8)) -> Option<Vec<(u8,u8)>> + '_> {
         // By validating first, we have a stronger guarantee that
         // this function will not panic. :)
         if let Err(msg) = self.validate() {
@@ -75,6 +75,7 @@ impl TransferRegion<'_> {
 
         let source_wells = self.get_source_wells();
         let il_dest = self.interleave_dest.unwrap_or((1,1));
+        let il_source = self.interleave_source.unwrap_or((1,1));
 
 
         let source_corners: ((u8,u8),(u8,u8)) = self.source_region.try_into()
@@ -83,26 +84,62 @@ impl TransferRegion<'_> {
         // This map is not necessarily injective or surjective,
         // but we will have these properties in certain cases.
         // If the transfer is not a pooling transfer (interleave == 0)
-        // then we *will* have injectivity.
+        // and simple then we *will* have injectivity.
 
         // Non-replicate transfers:
         match self.dest_region {
             Region::Point((x,y)) => return Box::new(move |(i,j)| {
                 if source_wells.contains(&(i,j)) {
-                    let il_source = self.interleave_source.unwrap_or((1,1));
                     // Validity here already checked by self.validate()
-                    Some((
+                    Some(vec!((
                             x + i.checked_sub(source_ul.0).expect("Point cannot have been less than UL")
                                 .checked_div(il_source.0.abs() as u8).expect("Source interleave cannot be 0")
                                     .mul(il_dest.0.abs() as u8),
                             y + j.checked_sub(source_ul.1).expect("Point cannot have been less than UL")
                                 .checked_div(il_source.1.abs() as u8).expect("Source interleave cannot be 0")
                                     .mul(il_dest.1.abs() as u8),
-                            ))
+                            )))
                 } else { None }
             }),
             Region::Rect(c1, c2) => return Box::new(move |(i,j)| {
-                None
+                // Because of our call to validate,
+                // we can assume that our destination region contains
+                // an integer number of our source regions.
+                if source_wells.contains(&(i,j)) {
+                    // Find points by checking congruence class
+                    let possible_destination_wells = create_dense_rectangle(&c1, &c2);
+                    let (ds1,ds2) = standardize_rectangle(&c1, &c2);
+                    let (s1,s2) = standardize_rectangle(&source_corners.0, &source_corners.1);
+                    let dims = (s2.0.checked_sub(s1.0).unwrap()+1, s2.1.checked_sub(s1.1).unwrap()+1);
+                    let relative_ij = (i.checked_sub(source_ul.0).expect("Point cannot have been less than UL"),
+                                       j.checked_sub(source_ul.1).expect("Point cannot have been less than UL"));
+                    /*
+                    println!("{} % {} == {}", i, dims.0, i*il_dest.0.abs() as u8 % dims.0);
+                    for a in ds1.0..=ds2.0 {
+                        for b in ds1.1..=ds2.1 {
+                            println!("({},{}): {} % {} == {}", a, b,
+                            a.checked_sub(ds1.0).unwrap()+1, dims.0,
+                            (a.checked_sub(ds1.0).unwrap()+1) % dims.0);
+                        }
+                    }
+                    for a in ds1.0..=ds2.0 {
+                        for b in ds1.1..=ds2.1 {
+                            println!("({},{}): {} % {} == {}", a, b,
+                            a.checked_sub(ds1.0).unwrap()+1, il_dest.0.abs() as u8,
+                            (a.checked_sub(ds1.0).unwrap()+1) % il_dest.0.abs() as u8);
+                        }
+                    }
+                    */
+
+                    Some(possible_destination_wells.into_iter()
+                        .filter(|(x,y)| i*il_dest.0.abs() as u8 % dims.0 
+                                        == (x.checked_sub(ds1.0).unwrap() + 1) % dims.0 &&
+                                        j*il_dest.1.abs() as u8 % dims.1
+                                        == (y.checked_sub(ds1.1).unwrap() + 1) % dims.1)
+                        .filter(|(x,y)| (x.checked_sub(ds1.0).unwrap()) % il_dest.0.abs() as u8 == 0 &&
+                                        (y.checked_sub(ds1.1).unwrap()) % il_dest.1.abs() as u8 == 0)
+                        .collect())
+                } else { None }
             })
         }
     }
