@@ -86,8 +86,8 @@ impl TransferRegion<'_> {
         // then we *will* have injectivity.
 
         // Non-replicate transfers:
-        if let Region::Point((x,y)) = self.dest_region {
-            return Box::new(move |(i,j)| {
+        match self.dest_region {
+            Region::Point((x,y)) => return Box::new(move |(i,j)| {
                 if source_wells.contains(&(i,j)) {
                     let il_source = self.interleave_source.unwrap_or((1,1));
                     // Validity here already checked by self.validate()
@@ -100,9 +100,10 @@ impl TransferRegion<'_> {
                                     .mul(il_dest.1.abs() as u8),
                             ))
                 } else { None }
+            }),
+            Region::Rect(c1, c2) => return Box::new(move |(i,j)| {
+                None
             })
-        } else {
-            return Box::new(move |(_,_)| None)
         }
     }
 
