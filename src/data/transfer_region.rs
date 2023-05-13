@@ -39,7 +39,7 @@ impl TransferRegion<'_> {
             let (interleave_i, interleave_j) = (i8::max(interleave_i, 1), i8::max(interleave_j, 1));
 
             for i in (ul.0..=br.0).step_by(i8::abs(interleave_i) as usize) {
-                for j in (ul.0..=br.0).step_by(i8::abs(interleave_j) as usize) {
+                for j in (ul.1..=br.1).step_by(i8::abs(interleave_j) as usize) {
             // NOTE: It looks like we're ignoring negative interleaves,
             // because it wouldn't make a difference here---the same
             // wells will still be involved in the transfer.
@@ -184,22 +184,24 @@ impl TransferRegion<'_> {
                         // (dim)*(il) - (il - 1)
                         let dest_diff_i = ((il_dest.0.abs() as u8)*u8::abs_diff(d1.0, d2.0))
                                             .checked_sub(il_dest.0.abs() as u8 - 1)
-                                            .expect("Dimension is somehow negative?");
+                                            .expect("Dimension is somehow negative?")+1;
                         let dest_diff_j = ((il_dest.1.abs() as u8)*u8::abs_diff(d1.1, d2.1))
                                             .checked_sub(il_dest.1.abs() as u8 - 1)
-                                            .expect("Dimension is somehow negative?");
+                                            .expect("Dimension is somehow negative?")+1;
                         let source_diff_i = ((il_source.0.abs() as u8)*u8::abs_diff(s1.0, s2.0))
                                             .checked_sub(il_source.0.abs() as u8 - 1)
-                                            .expect("Dimension is somehow negative?");
+                                            .expect("Dimension is somehow negative?")+1;
                         let source_diff_j = ((il_source.1.abs() as u8)*u8::abs_diff(s1.1, s2.1))
                                             .checked_sub(il_source.1.abs() as u8 - 1)
-                                            .expect("Dimension is somehow negative?");
+                                            .expect("Dimension is somehow negative?")+1;
 
 
-                        if source_diff_i % dest_diff_i != 0 {
+                        if dest_diff_i % source_diff_i != 0 {
+                            eprintln!("{} {}", source_diff_i, dest_diff_i);
                             return Err("Replicate region has indivisible height!")
                         }
-                        if source_diff_j % dest_diff_j != 0 {
+                        if dest_diff_j % source_diff_j != 0 {
+                            eprintln!("{} {}", source_diff_j, source_diff_j);
                             return Err("Replicate region has indivisible width!")
                         }
                     }
@@ -238,6 +240,20 @@ fn in_region(pt: (u8,u8), r: &Region) -> bool {
     }
 }
 
+fn create_dense_rectangle(c1: &(u8,u8), c2: &(u8,u8)) -> Vec<(u8,u8)> {
+    // Creates a vector of every point between two corners
+    let (c1, c2) = standardize_rectangle(c1, c2);
+
+    let mut points = Vec::<(u8,u8)>::new();
+    for i in c1.0..=c2.0 {
+        for j in c1.1..=c2.1 {
+            points.push((i,j));
+        }
+    }
+
+    return points;
+}
+
 fn standardize_rectangle(c1: &(u8,u8), c2: &(u8,u8)) -> ((u8,u8),(u8,u8)) {
     let upper_left_i = u8::min(c1.0, c2.0);
     let upper_left_j = u8::min(c1.1, c2.1);
@@ -262,7 +278,7 @@ impl fmt::Display for TransferRegion<'_> {
                 if source_wells.contains(&(i,j)) {
                     source_string.push_str("x")
                 } else {
-                    source_string.push_str("o")
+                    source_string.push_str(".")
                 }
             }
             source_string.push_str("\n");
