@@ -117,34 +117,48 @@ impl TransferRegion<'_> {
         //     - Are the wells in the destination there? (Sometimes running OOB is okay though?)
         //     - In a replication region, do the source lengths divide the destination lengths?
         //     - Are the interleaves valid?
+        let il_source = self.interleave_source.unwrap_or((1,1));
+        let il_dest = self.interleave_dest.unwrap_or((1,1));
 
         match self.source_region {
             Region::Point(_) => return Err("Source region should not be a point!"),
-            Region::Rect(c1, c2) => {
+            Region::Rect(s1, s2) => {
                 // Check if all source wells exist:
-                if c1.0 == 0 || c1.1 == 0
-                    || c2.0 == 0 || c2.1 == 0 {
+                if s1.0 == 0 || s1.1 == 0
+                    || s2.0 == 0 || s2.1 == 0 {
                         return Err("Source region is out-of-bounds! (Too small)")
                     }
                 // Sufficient to check if the corners are in-bounds
                 let source_max = self.source_plate.size();
-                if c1.0 > source_max.0 ||
-                    c2.0 > source_max.0 {
+                if s1.0 > source_max.0 ||
+                    s2.0 > source_max.0 {
                         return Err("Source region is out-of-bounds! (Too tall)")
                     }
-                if c1.1 > source_max.1 ||
-                    c2.1 > source_max.1 {
+                if s1.1 > source_max.1 ||
+                    s2.1 > source_max.1 {
                         return Err("Source region is out-of-bounds! (Too wide)")
                     }
                 // Check that source lengths divide destination lengths
                 match &self.dest_region {
                     Region::Point(_) => (),
-                    Region::Rect(c1, c2) => {
-                        let dest_diff_i = u8::abs_diff(c1.0, c2.0);
-                        let dest_diff_j = u8::abs_diff(c1.1, c2.1);
+                    Region::Rect(d1, d2) => {
+                        // If we consider interleaves, it's slightly more
+                        // complicated to compute the true dimensions of
+                        // each region.
+                        // (dim)*(il) - (il - 1)
+                        let dest_diff_i = ((il_dest.0.abs() as u8)*u8::abs_diff(d1.0, d2.0))
+                                            .checked_sub(il_dest.0.abs() as u8 - 1)
+                                            .expect("Dimension is somehow negative?");
+                        let dest_diff_j = ((il_dest.1.abs() as u8)*u8::abs_diff(d1.1, d2.1))
+                                            .checked_sub(il_dest.1.abs() as u8 - 1)
+                                            .expect("Dimension is somehow negative?");
+                        let source_diff_i = ((il_source.0.abs() as u8)*u8::abs_diff(s1.0, s2.0))
+                                            .checked_sub(il_source.0.abs() as u8 - 1)
+                                            .expect("Dimension is somehow negative?");
+                        let source_diff_j = ((il_source.1.abs() as u8)*u8::abs_diff(s1.1, s2.1))
+                                            .checked_sub(il_source.1.abs() as u8 - 1)
+                                            .expect("Dimension is somehow negative?");
 
-                        let source_diff_i = u8::abs_diff(c1.0, c2.0);
-                        let source_diff_j = u8::abs_diff(c1.1, c2.1);
 
                         if source_diff_i % dest_diff_i != 0 {
                             return Err("Replicate region has indivisible height!")
