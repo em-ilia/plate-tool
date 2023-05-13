@@ -90,6 +90,7 @@ impl TransferRegion<'_> {
             return Box::new(move |(i,j)| {
                 if source_wells.contains(&(i,j)) {
                     let il_source = self.interleave_source.unwrap_or((1,1));
+                    // Validity here already checked by self.validate()
                     Some((
                             x + i.checked_sub(source_ul.0).expect("Point cannot have been less than UL")
                                 .checked_div(il_source.0.abs() as u8).expect("Source interleave cannot be 0")
@@ -105,7 +106,7 @@ impl TransferRegion<'_> {
         }
     }
 
-    pub fn validate(&self) -> Result<(), String> {
+    pub fn validate(&self) -> Result<(), &'static str> {
         // Checks if the region does anything suspect
         //
         // If validation fails, we pass a string to show to the user.
@@ -114,25 +115,25 @@ impl TransferRegion<'_> {
         //     - Are the wells in the source really there?
         //     - Are the wells in the destination there? (Sometimes running OOB is okay though?)
         //     - In a replication region, do the source lengths divide the destination lengths?
+        //     - Are the interleaves valid?
 
-        // Easy checks:
         match self.source_region {
-            Region::Point(_) => return Err("Source region should not be a point!".to_string()),
+            Region::Point(_) => return Err("Source region should not be a point!"),
             Region::Rect(c1, c2) => {
                 // Check if all source wells exist:
                 if c1.0 == 0 || c1.1 == 0
                     || c2.0 == 0 || c2.1 == 0 {
-                        return Err("Source region is out-of-bounds! (Too small)".to_string())
+                        return Err("Source region is out-of-bounds! (Too small)")
                     }
                 // Sufficient to check if the corners are in-bounds
                 let source_max = self.source_plate.size();
                 if c1.0 > source_max.0 ||
                     c2.0 > source_max.0 {
-                        return Err("Source region is out-of-bounds! (Too tall)".to_string())
+                        return Err("Source region is out-of-bounds! (Too tall)")
                     }
                 if c1.1 > source_max.1 ||
                     c2.1 > source_max.1 {
-                        return Err("Source region is out-of-bounds! (Too wide)".to_string())
+                        return Err("Source region is out-of-bounds! (Too wide)")
                     }
                 // Check that source lengths divide destination lengths
                 match &self.dest_region {
@@ -145,13 +146,19 @@ impl TransferRegion<'_> {
                         let source_diff_j = u8::abs_diff(c1.1, c2.1);
 
                         if source_diff_i % dest_diff_i != 0 {
-                            return Err("Replicate region has indivisible height!".to_string())
+                            return Err("Replicate region has indivisible height!")
                         }
                         if source_diff_j % dest_diff_j != 0 {
-                            return Err("Replicate region has indivisible width!".to_string())
+                            return Err("Replicate region has indivisible width!")
                         }
                     }
                 }
+            }
+        }
+
+        if let Some(source_il) = self.interleave_source {
+            if source_il.0 == 0 || source_il.1 == 0 {
+                return Err("Source interleave cannot be zero!")
             }
         }
 
