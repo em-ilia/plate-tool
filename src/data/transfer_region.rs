@@ -1,8 +1,20 @@
 use super::plate::Plate;
 
+#[derive(Clone, Copy)]
 pub enum Region {
     Rect((u8,u8),(u8,u8)),
-    Point(u8,u8)
+    Point((u8,u8))
+}
+impl TryFrom<Region> for ((u8,u8),(u8,u8)) {
+    type Error = &'static str;
+    fn try_from(region: Region) -> Result<Self, Self::Error> {
+        if let Region::Rect(c1, c2) = region {
+            Ok((c1,c2))
+        } else {
+            // Should consider returning a degenerate rectangle here instead
+            Err("Cannot convert this region to a rectangle, it was a point.")
+        }
+    }
 }
 
 pub struct TransferRegion<'a> {
@@ -37,6 +49,72 @@ impl TransferRegion<'_> {
             return wells;
         } else { panic!("Source region is just a point!") }
     }
+    pub fn get_destination_wells(&self) -> Vec<(u8,u8)> {
+        let map = self.calculate_map();
+        let source_wells = self.get_source_wells();
+
+        let mut wells = Vec::<(u8,u8)>::new();
+        
+        for well in source_wells {
+            if let Some(dest_well) = map(well) {
+                wells.push(dest_well)
+            }
+        }
+
+        return wells;
+    }
+
+    pub fn calculate_map(&self) -> Box<dyn Fn((u8,u8)) -> Option<(u8,u8)> + '_> {
+        let source_wells = self.get_source_wells();
+        let il_dest = self.interleave_dest.unwrap_or((1,1));
+
+        let il_source = self.interleave_source.unwrap_or((1,1));
+        if il_source.0 == 0 { let il_source = (1,il_source.1); }
+        if il_source.1 == 0 { let il_source = (il_source.1,il_source.0); }
+
+        let source_corners: ((u8,u8),(u8,u8)) = self.source_region.try_into()
+                                                   .expect("Source region should not be a point");
+        let (source_ul, _) = standardize_rectangle(&source_corners.0, &source_corners.1);
+        // This map is not necessarily injective or surjective,
+        // but we will have these properties in certain cases.
+        // If the transfer is not a pooling transfer (interleave == 0)
+        // then we *will* have injectivity.
+
+        // First we'll handle ij-pooling transfers, since they're the simplest.
+        // NOTE: I'm going to say that these transfers always go to the primary corner,
+        // because I can't envision how an ij-pooling replicate transfer would work.
+        if il_dest == (0,0) {
+            return Box::new(move |(i,j)| { // All we're moving here is source_wells
+                if source_wells.contains(&(i,j)) {
+                    match self.dest_region {
+                        Region::Point((i0, j0)) => Some((i0,j0)),
+                        Region::Rect((i0,j0),_) => Some((i0,j0))
+                    }
+                } else {
+                    None
+                }
+                })
+        }
+
+        // Non-replicate transfers:
+        if let Region::Point((x,y)) = self.dest_region {
+            return Box::new(move |(i,j)| {
+                if source_wells.contains(&(i,j)) {
+                    let il_source = self.interleave_source.unwrap_or((1,1));
+                    Some((
+                            x + i.checked_sub(source_ul.0).expect("Point cannot have been less than UL")
+                                .checked_div(il_source.0.abs() as u8).expect("Source interleave cannot be 0")
+                                    .mul(il_dest.0.abs() as u8),
+                            y + j.checked_sub(source_ul.1).expect("Point cannot have been less than UL")
+                                .checked_div(il_source.1.abs() as u8).expect("Source interleave cannot be 0")
+                                    .mul(il_dest.1.abs() as u8),
+                            ))
+                } else { None }
+            })
+        } else {
+            return Box::new(move |(_,_)| None)
+        }
+    }
 
     pub fn validate(&self) -> Result<(), String> {
         // Checks if the region does anything suspect
@@ -50,7 +128,7 @@ impl TransferRegion<'_> {
 
         // Easy checks:
         match self.source_region {
-            Region::Point(_, _) => return Err("Source region should not be a point!".to_string()),
+            Region::Point(_) => return Err("Source region should not be a point!".to_string()),
             Region::Rect(c1, c2) => {
                 // Check if all source wells exist:
                 if c1.0 == 0 || c1.1 == 0
@@ -69,7 +147,7 @@ impl TransferRegion<'_> {
                     }
                 // Check that source lengths divide destination lengths
                 match &self.dest_region {
-                    Region::Point(_,_) => (),
+                    Region::Point(_) => (),
                     Region::Rect(c1, c2) => {
                         let dest_diff_i = u8::abs_diff(c1.0, c2.0);
                         let dest_diff_j = u8::abs_diff(c1.1, c2.1);
@@ -105,7 +183,7 @@ fn in_region(pt: (u8,u8), r: &Region) -> bool {
             && pt.1 <= u8::max(c1.1, c2.1)
             && pt.1 >= u8::min(c1.1, c2.1)
         },
-        Region::Point(i, j) => {
+        Region::Point((i, j)) => {
             pt.0 == *i && pt.1 == *j
         }
     }
@@ -121,6 +199,7 @@ fn standardize_rectangle(c1: &(u8,u8), c2: &(u8,u8)) -> ((u8,u8),(u8,u8)) {
 
 #[cfg(debug_assertions)]
 use std::fmt;
+use std::ops::Mul;
 
 #[cfg(debug_assertions)]
 impl fmt::Display for TransferRegion<'_> {
@@ -139,6 +218,22 @@ impl fmt::Display for TransferRegion<'_> {
             }
             source_string.push_str("\n");
         }
-        write!(f, "{}", source_string)
+        write!(f, "{}", source_string)?;
+
+        writeln!(f, "Dest Plate:")?;
+        let dest_dims = self.dest_plate.size();
+        let dest_wells = self.get_destination_wells();
+        let mut dest_string = String::new();
+        for i in 1..=dest_dims.0 {
+            for j in 1..=dest_dims.1 {
+                if dest_wells.contains(&(i,j)) {
+                    dest_string.push_str("x")
+                } else {
+                    dest_string.push_str("o")
+                }
+            }
+            dest_string.push_str("\n");
+        }
+        write!(f, "{}", dest_string)
     }
 }
