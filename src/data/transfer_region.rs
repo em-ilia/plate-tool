@@ -114,7 +114,6 @@ impl TransferRegion<'_> {
         //
         // We check:
         //     - Are the wells in the source really there?
-        //     - Are the wells in the destination there? (Sometimes running OOB is okay though?)
         //     - In a replication region, do the source lengths divide the destination lengths?
         //     - Are the interleaves valid?
         let il_source = self.interleave_source.unwrap_or((1,1));
@@ -180,6 +179,8 @@ impl TransferRegion<'_> {
 
         // Check if all destination wells exist:
         // NOT IMPLEMENTED
+        // Should *not* happen in this function---otherwise
+        // we'd get a nasty recursive loop.
 
 
         return Ok(())
