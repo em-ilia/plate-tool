@@ -29,7 +29,9 @@ pub fn plate_test() {
         source_region: transfer_region::Region::Rect((1,1), (6,6)),
         dest_plate: &destination,
         dest_region: transfer_region::Region::Rect((1,1), (6,6)),
-        offset: None
+        interleave_source: Some((2,1)),
+        interleave_dest: None
     };
-    println!("{}", transfer)
+    println!("{}", transfer);
+    println!("{:?}", transfer.get_source_wells());
 }
