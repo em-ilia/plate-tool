@@ -241,7 +241,7 @@ impl fmt::Display for TransferRegion<'_> {
                 if dest_wells.contains(&(i,j)) {
                     dest_string.push_str("x")
                 } else {
-                    dest_string.push_str("o")
+                    dest_string.push_str(".")
                 }
             }
             dest_string.push_str("\n");
