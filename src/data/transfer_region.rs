@@ -297,7 +297,7 @@ fn standardize_rectangle(c1: &(u8, u8), c2: &(u8, u8)) -> ((u8, u8), (u8, u8)) {
 use std::fmt;
 use std::ops::Mul;
 
-#[cfg(debug_assertions)]
+#[cfg(debug_assertions)] // There should be no reason to print a transfer otherwise
 impl fmt::Display for TransferRegion<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "Source Plate:")?;
@@ -331,5 +331,67 @@ impl fmt::Display for TransferRegion<'_> {
             dest_string.push_str("\n");
         }
         write!(f, "{}", dest_string)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::data::plate::*;
+    use crate::data::transfer_region::*;
+
+    #[test]
+    fn test_simple_transfer() {
+        let source = Plate::new(PlateType::Source, PlateFormat::W96);
+        let destination = Plate::new(PlateType::Destination, PlateFormat::W384);
+
+
+        let transfer1 = TransferRegion {
+            source_plate: &source,
+            source_region: Region::Rect((1, 1), (3, 3)),
+            dest_plate: &destination,
+            dest_region: Region::Point((3,3)),
+            interleave_source: None,
+            interleave_dest: None,
+        };
+        let transfer1_map = transfer1.calculate_map();
+        assert_eq!(transfer1_map((1,1)), Some(vec!{(3,3)}), "Failed basic shift transfer 1");
+        assert_eq!(transfer1_map((1,2)), Some(vec!{(3,4)}), "Failed basic shift transfer 2");
+        assert_eq!(transfer1_map((2,2)), Some(vec!{(4,4)}), "Failed basic shift transfer 3");
+
+        let transfer2 = TransferRegion {
+            source_plate: &source,
+            source_region: Region::Rect((1, 1), (3, 3)),
+            dest_plate: &destination,
+            dest_region: Region::Point((3,3)),
+            interleave_source: Some((2,2)),
+            interleave_dest: None,
+        }; 
+        let transfer2_map = transfer2.calculate_map();
+        assert_eq!(transfer2_map((1,1)), Some(vec!{(3,3)}), "Failed source interleave, type simple 1");
+        assert_eq!(transfer2_map((1,2)), None, "Failed source interleave, type simple 2");
+        assert_eq!(transfer2_map((2,2)), None, "Failed source interleave, type simple 3");
+        assert_eq!(transfer2_map((3,3)), Some(vec!{(4,4)}), "Failed source interleave, type simple 4");
+
+        let transfer3 = TransferRegion {
+            source_plate: &source,
+            source_region: Region::Rect((1, 1), (3, 3)),
+            dest_plate: &destination,
+            dest_region: Region::Point((3,3)),
+            interleave_source: None,
+            interleave_dest: Some((2,3)),
+        }; 
+        let transfer3_map = transfer3.calculate_map();
+        assert_eq!(transfer3_map((1,1)), Some(vec!{(3,3)}), "Failed destination interleave, type simple 1");
+        assert_eq!(transfer3_map((2,1)), Some(vec!{(5,3)}), "Failed destination interleave, type simple 2");
+        assert_eq!(transfer3_map((1,2)), Some(vec!{(3,6)}), "Failed destination interleave, type simple 3");
+        assert_eq!(transfer3_map((2,2)), Some(vec!{(5,6)}), "Failed destination interleave, type simple 4");
+    }
+
+    #[test]
+    fn test_replicate_transfer() {
+    }
+
+    #[test]
+    fn test_pooling_transfer() {
     }
 }
