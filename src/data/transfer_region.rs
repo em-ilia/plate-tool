@@ -389,6 +389,20 @@ mod tests {
 
     #[test]
     fn test_replicate_transfer() {
+        let source = Plate::new(PlateType::Source, PlateFormat::W96);
+        let destination = Plate::new(PlateType::Destination, PlateFormat::W384);
+
+        let transfer1 = TransferRegion {
+            source_plate: &source,
+            source_region: Region::Rect((1, 1), (2, 2)),
+            dest_plate: &destination,
+            dest_region: Region::Rect((2,2),(11,11)),
+            interleave_source: None,
+            interleave_dest: Some((3,3)),
+        };
+        let transfer1_map = transfer1.calculate_map();
+        assert_eq!(transfer1_map((1,1)), Some(vec!{(2, 2), (2, 8), (8, 2), (8, 8)}), "Failed type replicate 1");
+        assert_eq!(transfer1_map((2,1)), Some(vec!{(5, 2), (5, 8), (11, 2), (11, 8)}), "Failed type replicate 1");
     }
 
     #[test]
