@@ -122,18 +122,13 @@ impl TransferRegion<'_> {
                     if source_wells.contains(&(i, j)) {
                         // Find points by checking congruence class
                         let possible_destination_wells = create_dense_rectangle(&c1, &c2);
-                        let (ds1, ds2) = standardize_rectangle(&c1, &c2);
+                        let (ds1, _) = standardize_rectangle(&c1, &c2);
                         let (s1, s2) = standardize_rectangle(&source_corners.0, &source_corners.1);
                         let dims = (
                             s2.0.checked_sub(s1.0).unwrap() + 1,
                             s2.1.checked_sub(s1.1).unwrap() + 1,
                         );
-                        let relative_ij = (
-                            i.checked_sub(source_ul.0)
-                                .expect("Point cannot have been less than UL"),
-                            j.checked_sub(source_ul.1)
-                                .expect("Point cannot have been less than UL"),
-                        );
+
                         /*
                         println!("{} % {} == {}", i, dims.0, i*il_dest.0.abs() as u8 % dims.0);
                         for a in ds1.0..=ds2.0 {
