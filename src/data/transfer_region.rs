@@ -204,6 +204,8 @@ impl TransferRegion<'_> {
                     return Err("Source region is out-of-bounds! (Too wide)");
                 }
                 // Check that source lengths divide destination lengths
+                /* This section is disabled because it's not
+                 * strictly necessary to have this property (divisibility)
                 match &self.dest_region {
                     Region::Point(_) => (),
                     Region::Rect(d1, d2) => {
@@ -234,6 +236,7 @@ impl TransferRegion<'_> {
                         }
                     }
                 }
+                */
             }
         }
 
