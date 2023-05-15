@@ -211,29 +211,25 @@ impl TransferRegion<'_> {
                         // complicated to compute the true dimensions of
                         // each region.
                         // (dim)*(il) - (il - 1)
-                        let dest_diff_i = ((il_dest.0.abs() as u8) * u8::abs_diff(d1.0, d2.0))
-                            .checked_sub(il_dest.0.abs() as u8 - 1)
-                            .expect("Dimension is somehow negative?")
-                            + 1;
-                        let dest_diff_j = ((il_dest.1.abs() as u8) * u8::abs_diff(d1.1, d2.1))
-                            .checked_sub(il_dest.1.abs() as u8 - 1)
-                            .expect("Dimension is somehow negative?")
-                            + 1;
-                        let source_diff_i = ((il_source.0.abs() as u8) * u8::abs_diff(s1.0, s2.0))
+                        let dest_dim_i = u8::abs_diff(d1.0, d2.0)+1;
+                        let dest_dim_j = u8::abs_diff(d1.1, d2.1)+1;
+                        let source_dim_i = ((il_source.0.abs() as u8) * u8::abs_diff(s1.0, s2.0))
                             .checked_sub(il_source.0.abs() as u8 - 1)
                             .expect("Dimension is somehow negative?")
                             + 1;
-                        let source_diff_j = ((il_source.1.abs() as u8) * u8::abs_diff(s1.1, s2.1))
+                        let source_dim_j = ((il_source.1.abs() as u8) * u8::abs_diff(s1.1, s2.1))
                             .checked_sub(il_source.1.abs() as u8 - 1)
                             .expect("Dimension is somehow negative?")
                             + 1;
 
-                        if dest_diff_i % source_diff_i != 0 {
-                            eprintln!("{} {}", source_diff_i, dest_diff_i);
+                        if dest_dim_i % (source_dim_i+il_dest.0.abs() as u8) != 0 {
+                            eprintln!("{} % {} = {}", dest_dim_i,
+                                source_dim_i+il_dest.0.abs() as u8,
+                                dest_dim_i % (source_dim_i+il_dest.0.abs() as u8));
                             return Err("Replicate region has indivisible height!");
                         }
-                        if dest_diff_j % source_diff_j != 0 {
-                            eprintln!("{} {}", source_diff_j, source_diff_j);
+                        if dest_dim_j % (source_dim_j+il_dest.1.abs() as u8) != 0 {
+                            eprintln!("{} {}", source_dim_j, source_dim_j);
                             return Err("Replicate region has indivisible width!");
                         }
                     }
@@ -343,7 +339,6 @@ mod tests {
     fn test_simple_transfer() {
         let source = Plate::new(PlateType::Source, PlateFormat::W96);
         let destination = Plate::new(PlateType::Destination, PlateFormat::W384);
-
 
         let transfer1 = TransferRegion {
             source_plate: &source,
