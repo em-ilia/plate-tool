@@ -76,6 +76,9 @@ fn SourcePlateCell(cx: Scope<PlateCellProps>, i: u8, j: u8, color: Option<String
             onmouseup: move |_| {
                 selection_state.write().m_stat = false
             },
+            div {
+                class: "plate_cell_inner"
+            }
         }
     })
 }

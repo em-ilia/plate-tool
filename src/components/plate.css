@@ -1,18 +1,24 @@
 table, tr, td {
 	box-sizing: border-box;
 	user-select: none; /* Prevents dragging issue */
+	border-spacing: 0px;
 }
 td.plate_cell {
 	width: 30px;
 	height: 30px;
 	background: none;
+}
+
+div.plate_cell_inner {
+	width: 90%;
+	height: 90%;
 	border-radius: 50%;
 	border: 2px solid black;
 }
-td.plate_cell:hover {
+td.plate_cell:hover div.plate_cell_inner {
 	background: black !important;
 }
 
-td.current_select {
+td.current_select div.plate_cell_inner {
 	background: lightblue !important;
 }
