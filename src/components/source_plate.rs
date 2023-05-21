@@ -68,7 +68,10 @@ fn SourcePlateCell(cx: Scope<PlateCellProps>, i: u8, j: u8, color: Option<String
                 selection_state.write().m_end = None;
                 selection_state.write().m_stat = true;
             },
-            onmouseover: move |_| {
+            onmouseenter: move |me: MouseEvent| {
+                if me.data.held_buttons().is_empty() {
+                    selection_state.write().m_stat = false;
+                }
                 if selection_state.read().m_stat {
                     selection_state.write().m_end = Some((*i,*j))
                 }
