@@ -1,16 +1,14 @@
 table, tr, td {
-	box-sizing: border-box;
 	user-select: none; /* Prevents dragging issue */
 	border-spacing: 0px;
 }
 td.plate_cell {
-	width: 30px;
-	height: 30px;
+	height: 2vmin;
 	background: none;
 }
 
 div.plate_cell_inner {
-	width: 90%;
+	aspect-ratio: 1 / 1;
 	height: 90%;
 	border-radius: 50%;
 	border: 2px solid black;

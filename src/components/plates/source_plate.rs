@@ -22,21 +22,22 @@ pub fn SourcePlate(cx: Scope<SourcePlateProps>) -> Element {
     });
 
     cx.render(rsx! {
-        style {
-            vec![STYLE].into_iter().map(|s| rsx!{s}) // This is stupid
-        }
-        SourcePlateSelectionIndicator {}
-        SourcePlateSelectionController {}
-        table {
-            draggable: "false",
-            for i in 1..=cx.props.height {
-                tr {
-                    draggable: "false",
-                    for j in 1..=cx.props.width {
-                        SourcePlateCell {i: i, j: j}
+        div{
+            class: "source_plate",
+            style { STYLE }
+            SourcePlateSelectionIndicator {}
+            SourcePlateSelectionController {}
+            table {
+                draggable: "false",
+                for i in 1..=cx.props.height {
+                    tr {
+                        draggable: "false",
+                        for j in 1..=cx.props.width {
+                            SourcePlateCell {i: i, j: j}
+                        }
                     }
-                }
-            },
+                },
+            }
         }
     })
 }

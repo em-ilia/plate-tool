@@ -2,7 +2,7 @@
 mod components;
 mod data;
 
-use components::source_plate::SourcePlate;
+use components::main_window::MainWindow;
 use dioxus::prelude::*;
 
 #[cfg(debug_assertions)]
@@ -10,13 +10,7 @@ use data::*;
 
 pub fn App(cx: Scope) -> Element {
     cx.render(rsx! {
-        div {
-            "Shrimp"
-            SourcePlate {
-                width: 24,
-                height: 18,
-            }
-        }
+        MainWindow {}
     })
 }
 
