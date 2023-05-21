@@ -26,12 +26,16 @@ pub fn plate_test() {
 
     let transfer = transfer_region::TransferRegion {
         source_plate: &source,
-        source_region: transfer_region::Region::Rect((1, 1), (5, 1)),
+        source_region: transfer_region::Region::Rect((1, 1), (2, 2)),
         dest_plate: &destination,
-        dest_region: transfer_region::Region::Rect((1, 1), (10, 4)),
-        //dest_region: transfer_region::Region::Point((3,3)),
+        dest_region: transfer_region::Region::Rect((2,2),(11,11)),
         interleave_source: None,
-        interleave_dest: Some((1, 2)),
+        interleave_dest: Some((3,3)),
     };
     println!("{}", transfer);
+    let sws = transfer.get_source_wells();
+    let m = transfer.calculate_map();
+    for w in sws {
+        println!("{:?} -> {:?}", w,m(w));
+    }
 }
