@@ -10,14 +10,6 @@ pub struct SourcePlateProps {
 
 #[function_component]
 pub fn SourcePlate(props: &SourcePlateProps) -> Html {
-    /*
-    let selection_state = use_state_eq(|| SelectionState{
-        m_start: None,
-        m_end: None,
-        m_stat: false
-    });
-    */
-
     let m_start_handle: UseStateHandle<Option<(u8,u8)>> = use_state_eq(|| None);
     let m_end_handle: UseStateHandle<Option<(u8,u8)>> = use_state_eq(|| None);
     let m_stat_handle: UseStateHandle<bool> = use_state_eq(|| false);
@@ -94,7 +86,7 @@ fn SourcePlateCell(props: &SourcePlateCellProps) -> Html {
         true => Some("current_select"),
         false => None,
     };
-    let color_string = match &props.color {
+    let _color_string = match &props.color {
         Some(c) => c.clone(),
         None => "None".to_string(),
     };
@@ -113,35 +105,6 @@ fn SourcePlateCell(props: &SourcePlateCellProps) -> Html {
             <div class="plate_cell_inner" />
         </td>
     }
-
-    /*
-    cx.render(rsx! {
-        td {
-            class: "plate_cell {selected_class}",
-            draggable: "false",
-            style: "background: {color_string}",
-            onmousedown: move |_| {
-                selection_state.write().m_start = Some((*i,*j));
-                selection_state.write().m_end = None;
-                selection_state.write().m_stat = true;
-            },
-            onmouseenter: move |me: MouseEvent| {
-                if me.data.held_buttons().is_empty() {
-                    selection_state.write().m_stat = false;
-                }
-                if selection_state.read().m_stat {
-                    selection_state.write().m_end = Some((*i,*j))
-                }
-            },
-            onmouseup: move |_| {
-                selection_state.write().m_stat = false
-            },
-            div {
-                class: "plate_cell_inner"
-            }
-        }
-    })
-    */
 }
 
 fn in_rect(corner1: Option<(u8, u8)>, corner2: Option<(u8, u8)>, pt: (u8, u8)) -> bool {
