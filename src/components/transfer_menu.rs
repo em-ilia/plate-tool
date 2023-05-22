@@ -59,12 +59,24 @@ pub fn TransferMenu() -> Html {
     html! {
         <div class="transfer_menu">
             <form>
+            <div>
                 <label for="src_region">{"Source Region:"}</label>
                 <input type="text" name="src_region"
                 onchange={on_src_region_change} value={state.source_region.text.clone()}/>
+            </div>
+            <div>
                 <label for="dest_region">{"Destination Region:"}</label>
                 <input type="text" name="dest_region"
                 onchange={on_dest_region_change} value={state.destination_region.text.clone()}/>
+            </div>
+            <div>
+            {"Interleave "}
+            <label for="interleave_x">{"X:"}</label>
+            <input type="number" name="interleave_x"/>
+            <label for="interleave_y">{"Y:"}</label>
+            <input type="number" name="interleave_y"/>
+            </div>
+            <input type="button" name="create_transfer" value={"Create"} />
             </form>
         </div>
     }
