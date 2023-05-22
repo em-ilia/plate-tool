@@ -34,6 +34,27 @@ pub fn TransferMenu() -> Html {
             }
         })
     };
+    let on_dest_region_change = {
+        let state = state.clone();
+        let dispatch = dispatch.clone();
+
+        Callback::from(move |e: Event| {
+            log::debug!("Input changed.");
+            let target: Option<EventTarget> = e.target();
+            let input = target.and_then(|t| t.dyn_into::<HtmlInputElement>().ok());
+            if let Some(input) = input {
+                if let Ok(rd) = RegionDisplay::try_from(input.value()) {
+                    dispatch.set( NewTransferState {
+                        source_region: state.source_region.clone(),
+                        destination_region: rd,
+                        interleave_x: state.interleave_x,
+                        interleave_y: state.interleave_y
+                    });
+                    log::debug!("{:?}", dispatch.get());
+                }
+            }
+        })
+    };
 
     html! {
         <div class="transfer_menu">
@@ -42,7 +63,8 @@ pub fn TransferMenu() -> Html {
                 <input type="text" name="src_region"
                 onchange={on_src_region_change} value={state.source_region.text.clone()}/>
                 <label for="dest_region">{"Destination Region:"}</label>
-                <input type="text" name="dest_region" />
+                <input type="text" name="dest_region"
+                onchange={on_dest_region_change} value={state.destination_region.text.clone()}/>
             </form>
         </div>
     }
