@@ -4,16 +4,19 @@ mod data;
 
 use components::main_window::MainWindow;
 use dioxus::prelude::*;
+use fermi::*;
 
 #[cfg(debug_assertions)]
 use data::*;
 
 pub fn App(cx: Scope) -> Element {
+    use_init_atom_root(cx);
     cx.render(rsx! {
         MainWindow {}
     })
 }
 
+#[cfg(debug_assertions)]
 pub fn plate_test() {
     let source = plate::Plate::new(plate::PlateType::Source, plate::PlateFormat::W96);
     let destination = plate::Plate::new(plate::PlateType::Destination, plate::PlateFormat::W384);
