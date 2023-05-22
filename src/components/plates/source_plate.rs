@@ -27,7 +27,6 @@ pub fn SourcePlate(props: &SourcePlateProps) -> Html {
         let m_stat_handle = m_stat_handle.clone();
 
         move |nts: Rc<NewTransferState>| {
-            log::debug!("Got an updated state!");
             if !(*m_stat_handle) {
                 let pt1 = (nts.source_region.col_start, nts.source_region.row_start);
                 let pt2 = (nts.source_region.col_end, nts.source_region.row_end);
@@ -47,7 +46,7 @@ pub fn SourcePlate(props: &SourcePlateProps) -> Html {
             match t {
                 MouseEventType::MOUSEDOWN => {
                     m_start_handle.set(Some((i,j)));
-                    m_end_handle.set(None);
+                    m_end_handle.set(Some((i,j)));
                     m_stat_handle.set(true);
                 },
                 MouseEventType::MOUSEENTER => {
@@ -154,7 +153,7 @@ fn SourcePlateCell(props: &SourcePlateCellProps) -> Html {
     }
 }
 
-fn in_rect(corner1: Option<(u8, u8)>, corner2: Option<(u8, u8)>, pt: (u8, u8)) -> bool {
+pub fn in_rect(corner1: Option<(u8, u8)>, corner2: Option<(u8, u8)>, pt: (u8, u8)) -> bool {
     if let (Some(c1), Some(c2)) = (corner1, corner2) {
         return pt.0 <= u8::max(c1.0, c2.0)
             && pt.0 >= u8::min(c1.0, c2.0)
