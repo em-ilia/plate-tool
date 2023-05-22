@@ -33,6 +33,9 @@ div.transfer_menu {
 	height: 100%;
 	border: 2px solid orange;
 }
+div.transfer_menu input:invalid {
+	background-color: #faa;
+}
 
 div.plate_container {
 	border: 2px dashed purple;

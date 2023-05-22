@@ -29,7 +29,9 @@ pub fn TransferMenu() -> Html {
                         interleave_x: state.interleave_x,
                         interleave_y: state.interleave_y
                     });
-                    log::debug!("{:?}", dispatch.get());
+                    input.set_custom_validity("");
+                } else {
+                    input.set_custom_validity("Invalid region.")
                 }
             }
         })
@@ -50,7 +52,9 @@ pub fn TransferMenu() -> Html {
                         interleave_x: state.interleave_x,
                         interleave_y: state.interleave_y
                     });
-                    log::debug!("{:?}", dispatch.get());
+                    input.set_custom_validity("");
+                } else {
+                    input.set_custom_validity("Invalid region.")
                 }
             }
         })
