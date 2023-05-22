@@ -1,6 +1,6 @@
 use super::plate::Plate;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Region {
     Rect((u8, u8), (u8, u8)),
     Point((u8, u8)),
@@ -17,16 +17,17 @@ impl TryFrom<Region> for ((u8, u8), (u8, u8)) {
     }
 }
 
-pub struct TransferRegion<'a> {
-    pub source_plate: &'a Plate,
+#[derive(PartialEq, Eq, Clone, Copy)]
+pub struct TransferRegion {
+    pub source_plate: Plate,
     pub source_region: Region, // Even if it is just a point, we don't want corners.
-    pub dest_plate: &'a Plate,
+    pub dest_plate: Plate,
     pub dest_region: Region,
     pub interleave_source: Option<(i8, i8)>,
     pub interleave_dest: Option<(i8, i8)>,
 }
 
-impl TransferRegion<'_> {
+impl TransferRegion {
     pub fn get_source_wells(&self) -> Vec<(u8, u8)> {
         if let Region::Rect(c1, c2) = self.source_region {
             let mut wells = Vec::<(u8, u8)>::new();
@@ -292,7 +293,7 @@ use std::fmt;
 use std::ops::Mul;
 
 #[cfg(debug_assertions)] // There should be no reason to print a transfer otherwise
-impl fmt::Display for TransferRegion<'_> {
+impl fmt::Display for TransferRegion {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "Source Plate:")?;
         let source_dims = self.source_plate.size();
@@ -339,9 +340,9 @@ mod tests {
         let destination = Plate::new(PlateType::Destination, PlateFormat::W384);
 
         let transfer1 = TransferRegion {
-            source_plate: &source,
+            source_plate: source,
             source_region: Region::Rect((1, 1), (3, 3)),
-            dest_plate: &destination,
+            dest_plate: destination,
             dest_region: Region::Point((3,3)),
             interleave_source: None,
             interleave_dest: None,
@@ -352,9 +353,9 @@ mod tests {
         assert_eq!(transfer1_map((2,2)), Some(vec!{(4,4)}), "Failed basic shift transfer 3");
 
         let transfer2 = TransferRegion {
-            source_plate: &source,
+            source_plate: source,
             source_region: Region::Rect((1, 1), (3, 3)),
-            dest_plate: &destination,
+            dest_plate: destination,
             dest_region: Region::Point((3,3)),
             interleave_source: Some((2,2)),
             interleave_dest: None,
@@ -366,9 +367,9 @@ mod tests {
         assert_eq!(transfer2_map((3,3)), Some(vec!{(4,4)}), "Failed source interleave, type simple 4");
 
         let transfer3 = TransferRegion {
-            source_plate: &source,
+            source_plate: source,
             source_region: Region::Rect((1, 1), (3, 3)),
-            dest_plate: &destination,
+            dest_plate: destination,
             dest_region: Region::Point((3,3)),
             interleave_source: None,
             interleave_dest: Some((2,3)),
@@ -386,9 +387,9 @@ mod tests {
         let destination = Plate::new(PlateType::Destination, PlateFormat::W384);
 
         let transfer1 = TransferRegion {
-            source_plate: &source,
+            source_plate: source,
             source_region: Region::Rect((1, 1), (2, 2)),
-            dest_plate: &destination,
+            dest_plate: destination,
             dest_region: Region::Rect((2,2),(11,11)),
             interleave_source: None,
             interleave_dest: Some((3,3)),

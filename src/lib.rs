@@ -21,9 +21,9 @@ pub fn plate_test() {
     let destination = plate::Plate::new(plate::PlateType::Destination, plate::PlateFormat::W384);
 
     let transfer = transfer_region::TransferRegion {
-        source_plate: &source,
+        source_plate: source,
         source_region: transfer_region::Region::Rect((1, 1), (2, 2)),
-        dest_plate: &destination,
+        dest_plate: destination,
         dest_region: transfer_region::Region::Rect((2,2),(11,11)),
         interleave_source: None,
         interleave_dest: Some((3,3)),
