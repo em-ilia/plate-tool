@@ -4,7 +4,6 @@ use super::plates::plate_container::PlateContainer;
 use super::tree::Tree;
 use super::transfer_menu::TransferMenu;
 
-
 #[function_component]
 pub fn MainWindow() -> Html {
     html!{

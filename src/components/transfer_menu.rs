@@ -1,15 +1,46 @@
 #![allow(non_snake_case)]
+
 use yew::prelude::*;
+use yewdux::prelude::*;
+use wasm_bindgen::JsCast;
+use web_sys::{EventTarget, HtmlInputElement};
 use regex::Regex;
 use lazy_static::lazy_static;
 
+use super::states::NewTransferState;
+
 #[function_component]
 pub fn TransferMenu() -> Html {
+    let (state, dispatch) = use_store::<NewTransferState>();
+
+    let on_src_region_change = {
+        let state = state.clone();
+        let dispatch = dispatch.clone();
+
+        Callback::from(move |e: Event| {
+            log::debug!("Input changed.");
+            let target: Option<EventTarget> = e.target();
+            let input = target.and_then(|t| t.dyn_into::<HtmlInputElement>().ok());
+            if let Some(input) = input {
+                if let Ok(rd) = RegionDisplay::try_from(input.value()) {
+                    dispatch.set( NewTransferState {
+                        source_region: rd,
+                        destination_region: state.destination_region.clone(),
+                        interleave_x: state.interleave_x,
+                        interleave_y: state.interleave_y
+                    });
+                    log::debug!("{:?}", dispatch.get());
+                }
+            }
+        })
+    };
+
     html! {
         <div class="transfer_menu">
             <form>
                 <label for="src_region">{"Source Region:"}</label>
-                <input type="text" name="src_region" />
+                <input type="text" name="src_region"
+                onchange={on_src_region_change} value={state.source_region.text.clone()}/>
                 <label for="dest_region">{"Destination Region:"}</label>
                 <input type="text" name="dest_region" />
             </form>
@@ -17,13 +48,13 @@ pub fn TransferMenu() -> Html {
     }
 }
 
-#[derive(PartialEq, Eq, Debug)]
-struct RegionDisplay {
-    text: String,
-    col_start: u8,
-    row_start: u8,
-    col_end: u8,
-    row_end: u8,
+#[derive(PartialEq, Eq, Debug, Clone, Default)]
+pub struct RegionDisplay {
+    pub text: String,
+    pub col_start: u8,
+    pub row_start: u8,
+    pub col_end: u8,
+    pub row_end: u8,
 }
 
 impl TryFrom<String> for RegionDisplay {

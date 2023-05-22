@@ -1,6 +1,11 @@
 #![allow(non_snake_case)]
 
 use yew::prelude::*;
+use yewdux::prelude::*;
+use std::rc::Rc;
+
+use super::super::states::NewTransferState;
+use super::super::transfer_menu::RegionDisplay;
 
 #[derive(PartialEq, Properties)]
 pub struct SourcePlateProps {
@@ -13,27 +18,67 @@ pub fn SourcePlate(props: &SourcePlateProps) -> Html {
     let m_start_handle: UseStateHandle<Option<(u8,u8)>> = use_state_eq(|| None);
     let m_end_handle: UseStateHandle<Option<(u8,u8)>> = use_state_eq(|| None);
     let m_stat_handle: UseStateHandle<bool> = use_state_eq(|| false);
-    let m_stat_handle2 = m_stat_handle.clone();
     let m_start = m_start_handle.clone();
     let m_end = m_end_handle.clone();
 
-    let mouse_callback = Callback::from(move |(i,j,t)| {
-        match t {
-            MouseEventType::MOUSEDOWN => {
-                m_start_handle.set(Some((i,j)));
-                m_end_handle.set(None);
-                m_stat_handle.set(true);
-            },
-            MouseEventType::MOUSEENTER => {
-                if *m_stat_handle {
-                    m_end_handle.set(Some((i,j)))
-                }
+    let menu_sync_callback = {
+        let m_start_handle = m_start_handle.clone();
+        let m_end_handle = m_end_handle.clone();
+        let m_stat_handle = m_stat_handle.clone();
+
+        move |nts: Rc<NewTransferState>| {
+            log::debug!("Got an updated state!");
+            if !(*m_stat_handle) {
+                let pt1 = (nts.source_region.col_start, nts.source_region.row_start);
+                let pt2 = (nts.source_region.col_end, nts.source_region.row_end);
+                m_start_handle.set(Some(pt1));
+                m_end_handle.set(Some(pt2));
             }
         }
-    });
-    let mouseup_callback = Callback::from(move |_: MouseEvent| {
-        m_stat_handle2.set(false);
-    });
+    };
+    let dispatch = Dispatch::<NewTransferState>::subscribe(menu_sync_callback);
+
+    let mouse_callback = {
+        let m_start_handle = m_start_handle.clone();
+        let m_end_handle = m_end_handle.clone();
+        let m_stat_handle = m_stat_handle.clone();
+
+        Callback::from(move |(i,j,t)| {
+            match t {
+                MouseEventType::MOUSEDOWN => {
+                    m_start_handle.set(Some((i,j)));
+                    m_end_handle.set(None);
+                    m_stat_handle.set(true);
+                },
+                MouseEventType::MOUSEENTER => {
+                    if *m_stat_handle {
+                        m_end_handle.set(Some((i,j)));
+                    }
+                }
+            }
+        })
+    };
+
+    let mouseup_callback = {
+        let m_start_handle = m_start_handle.clone();
+        let m_end_handle = m_end_handle.clone();
+        let m_stat_handle = m_stat_handle.clone();
+
+        Callback::from(move |_: MouseEvent| {
+        let current = dispatch.get();
+        m_stat_handle.set(false);
+        if let Some(ul) = *m_start_handle {
+            if let Some(br) = *m_end_handle {
+                dispatch.set(NewTransferState {
+                    source_region: RegionDisplay::try_from((ul.0, ul.1, br.0, br.1)).expect(""),
+                    destination_region: current.destination_region.clone(),
+                    interleave_x: current.interleave_x,
+                    interleave_y: current.interleave_y })
+            }
+        }
+        })
+    };
+
     let mouseleave_callback = Callback::clone(&mouseup_callback);
 
     let rows = (1..=props.height).map(|i| {
