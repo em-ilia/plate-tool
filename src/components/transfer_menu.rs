@@ -64,6 +64,14 @@ impl TryFrom<String> for RegionDisplay {
     }
 
 }
+impl TryFrom<(u8,u8,u8,u8)> for RegionDisplay {
+    type Error =  &'static str;
+
+    fn try_from(value: (u8,u8,u8,u8)) -> Result<Self, Self::Error> {
+        // This can only possibly fail if one of the coordinates is zero...
+        Err("ni")
+    }
+}
 fn letters_to_num(letters: &str) -> Option<u8> {
     let mut num: u8 = 0;
     for (i, letter) in letters.chars().rev().enumerate() {
@@ -73,10 +81,28 @@ fn letters_to_num(letters: &str) -> Option<u8> {
     }
     return Some(num)
 }
+fn num_to_letters(num: u8) -> Option<String> {
+    if num == 0 { return None } // Otherwise, we will not return none!
+    // As another note, we can't represent higher than "IV" anyway;
+    // thus there's no reason for a loop (26^n with n>1 will NOT occur).
+    let mut text = "".to_string();
+    let mut digit1 = num.div_euclid(26u8);
+    let mut digit2 = num.rem_euclid(26u8);
+    if digit1 > 0 && digit2 == 0u8 {
+        digit1 -= 1;
+        digit2 = 26;
+    }
+    if digit1 != 0 {
+        text.push((64+digit1) as char)
+    }
+    text.push((64+digit2) as char);
+
+    return Some(text.to_string());
+}
 
 #[cfg(test)]
 mod tests {
-    use super::{letters_to_num, RegionDisplay};
+    use super::{letters_to_num, num_to_letters, RegionDisplay};
 
     #[test]
     fn test_letters_to_num() {
@@ -84,6 +110,24 @@ mod tests {
         assert_eq!(letters_to_num("d"), None);
         assert_eq!(letters_to_num("AD"), Some(26+4));
         assert_eq!(letters_to_num("CG"), Some(3*26+7));
+    }
+
+    #[test]
+    fn test_num_to_letters() {
+        println!("27 is {:?}", num_to_letters(27));
+        assert_eq!(num_to_letters(1), Some("A".to_string()));
+        assert_eq!(num_to_letters(26), Some("Z".to_string()));
+        assert_eq!(num_to_letters(27), Some("AA".to_string()));
+        assert_eq!(num_to_letters(111), Some("DG".to_string()));
+    }
+
+    #[test]
+    fn test_l2n_and_n2l() {
+        assert_eq!(num_to_letters(letters_to_num("A").unwrap()), Some("A".to_string()));
+        assert_eq!(num_to_letters(letters_to_num("BJ").unwrap()), Some("BJ".to_string()));
+        for i in 1..=255 {
+            assert_eq!(letters_to_num(&num_to_letters(i as u8).unwrap()), Some(i));
+        }
     }
 
     #[test]
