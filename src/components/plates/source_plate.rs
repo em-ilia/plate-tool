@@ -69,11 +69,13 @@ pub fn SourcePlate(props: &SourcePlateProps) -> Html {
         m_stat_handle.set(false);
         if let Some(ul) = *m_start_handle {
             if let Some(br) = *m_end_handle {
-                dispatch.set(NewTransferState {
-                    source_region: RegionDisplay::try_from((ul.0, ul.1, br.0, br.1)).expect(""),
-                    destination_region: current.destination_region.clone(),
-                    interleave_x: current.interleave_x,
-                    interleave_y: current.interleave_y })
+                if let Ok(rd) = RegionDisplay::try_from((ul.0, ul.1, br.0, br.1)) {
+                    dispatch.set(NewTransferState {
+                        source_region: rd,
+                        destination_region: current.destination_region.clone(),
+                        interleave_x: current.interleave_x,
+                        interleave_y: current.interleave_y })
+                }
             }
         }
         })
