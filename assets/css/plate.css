@@ -17,6 +17,9 @@ td.plate_cell:hover div.plate_cell_inner {
 	background: black !important;
 }
 
-td.current_select div.plate_cell_inner {
+div.source_plate td.current_select div.plate_cell_inner {
 	background: lightblue !important;
+}
+div.dest_plate td.current_select div.plate_cell_inner {
+	background: lightcoral !important;
 }
