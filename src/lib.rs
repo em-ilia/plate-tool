@@ -2,18 +2,17 @@
 mod components;
 mod data;
 
+use yew::prelude::*;
 use components::main_window::MainWindow;
-use dioxus::prelude::*;
-use fermi::*;
 
 #[cfg(debug_assertions)]
 use data::*;
 
-pub fn App(cx: Scope) -> Element {
-    use_init_atom_root(cx);
-    cx.render(rsx! {
-        MainWindow {}
-    })
+#[function_component]
+pub fn App() -> Html {
+    html! {
+        <MainWindow />
+    }
 }
 
 #[cfg(debug_assertions)]

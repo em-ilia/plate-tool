@@ -1,20 +1,20 @@
 #![allow(non_snake_case)]
-use dioxus::prelude::*;
-use super::source_plate::SourcePlate;
+use yew::prelude::*;
+ use super::source_plate::SourcePlate;
 use super::destination_plate::DestinationPlate;
 
-static STYLE: &'static str = include_str!("plate_container.css");
+#[derive(Properties, PartialEq)]
+pub struct PlateContainerProps {
+    pub source_dims: (u8,u8),
+    pub destination_dims: (u8,u8)
+}
 
-#[inline_props]
-pub fn PlateContainer(cx: Scope, source_dims: (u8,u8), destination_dims: (u8,u8)) -> Element {
-    cx.render(rsx! {
-        style { STYLE }
-        div {
-            class: "plate_container",
-            SourcePlate {width: source_dims.0,
-                         height: source_dims.1},
-            DestinationPlate {width: destination_dims.0,
-                              height: destination_dims.1}
-        }
-    })
+#[function_component]
+pub fn PlateContainer(props: &PlateContainerProps) -> Html {
+    html! {
+        <div class="plate_container">
+            <SourcePlate width={props.source_dims.0} height={props.source_dims.1} />
+            <DestinationPlate width={props.destination_dims.0} height={props.destination_dims.1} />
+        </div>
+    }
 }

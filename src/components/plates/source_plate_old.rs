@@ -1,120 +1,66 @@
 #![allow(non_snake_case)]
-
 use yew::prelude::*;
 
 #[derive(PartialEq, Properties)]
 pub struct SourcePlateProps {
-    pub width: u8,
-    pub height: u8,
+    width: u8,
+    height: u8,
+}
+struct SelectionState {
+    m_start: Option<(u8, u8)>,
+    m_end: Option<(u8, u8)>,
+    m_stat: bool,
 }
 
-#[function_component]
 pub fn SourcePlate(props: &SourcePlateProps) -> Html {
-    /*
-    let selection_state = use_state_eq(|| SelectionState{
+    use_shared_state_provider(cx, || SelectionState {
         m_start: None,
         m_end: None,
-        m_stat: false
+        m_stat: false,
     });
-    */
 
-    let m_start_handle: UseStateHandle<Option<(u8,u8)>> = use_state_eq(|| None);
-    let m_end_handle: UseStateHandle<Option<(u8,u8)>> = use_state_eq(|| None);
-    let m_stat_handle: UseStateHandle<bool> = use_state_eq(|| false);
-    let m_stat_handle2 = m_stat_handle.clone();
-    let m_start = m_start_handle.clone();
-    let m_end = m_end_handle.clone();
-
-    let mouse_callback = Callback::from(move |(i,j,t)| {
-        match t {
-            MouseEventType::MOUSEDOWN => {
-                m_start_handle.set(Some((i,j)));
-                m_end_handle.set(None);
-                m_stat_handle.set(true);
-            },
-            MouseEventType::MOUSEENTER => {
-                if *m_stat_handle {
-                    m_end_handle.set(Some((i,j)))
-                }
+    cx.render(rsx! {
+        div{
+            class: "source_plate",
+            style { STYLE }
+            table {
+                draggable: "false",
+                for i in 1..=cx.props.height {
+                    tr {
+                        draggable: "false",
+                        for j in 1..=cx.props.width {
+                            SourcePlateCell {i: i, j: j}
+                        }
+                    }
+                },
             }
         }
-    });
-    let mouseup_callback = Callback::from(move |_: MouseEvent| {
-        m_stat_handle2.set(false);
-    });
-    let mouseleave_callback = Callback::clone(&mouseup_callback);
-
-    let rows = (1..=props.height).map(|i| {
-        let row = (1..=props.width).map(|j| {
-            html! {
-                <SourcePlateCell i={i} j={j}
-                selected={in_rect(*m_start.clone(), *m_end.clone(), (i,j))}
-                mouse={mouse_callback.clone()}/>
-            }
-        }).collect::<Html>();
-        html! {
-            <tr>
-                { row }
-            </tr>
-        }
-    }).collect::<Html>();
-
-    html! {
-        <div class="source_plate">
-            <table
-            onmouseup={move |e| {
-                mouseup_callback.emit(e);
-            }}
-            onmouseleave={move |e| {
-                mouseleave_callback.emit(e);
-            }}>
-                { rows }
-            </table>
-        </div>
-    }
+    })
 }
 
 #[derive(PartialEq, Properties)]
 pub struct SourcePlateCellProps {
     i: u8,
     j: u8,
-    selected: bool,
-    mouse: Callback<(u8,u8, MouseEventType)>,
     color: Option<String>
 }
-#[derive(Debug)]
-pub enum MouseEventType {
-    MOUSEDOWN,
-    MOUSEENTER
-}
 
-#[function_component]
-fn SourcePlateCell(props: &SourcePlateCellProps) -> Html {
-    let selected_class = match props.selected {
-        true => Some("current_select"),
-        false => None,
+fn SourcePlateCell(props: &SourcePlateCe) -> Element {
+    let selection_state = use_shared_state::<SelectionState>(cx).unwrap();
+    let selected = in_rect(
+        selection_state.read().m_start,
+        selection_state.read().m_end,
+        (*i, *j),
+    );
+    let selected_class = match selected {
+        true => "current_select",
+        false => "",
     };
-    let color_string = match &props.color {
+    let color_string = match color {
         Some(c) => c.clone(),
         None => "None".to_string(),
     };
-    let mouse = Callback::clone(&props.mouse);
-    let mouse2 = Callback::clone(&props.mouse);
-    let (i,j) = (props.i.clone(), props.j.clone());
 
-    html! {
-        <td class={classes!("plate_cell", selected_class)}
-            onmousedown={move |_| {
-                mouse.emit((i,j, MouseEventType::MOUSEDOWN))
-            }}
-            onmouseenter={move |_| {
-                mouse2.emit((i,j, MouseEventType::MOUSEENTER))
-            }}>
-            <div class="plate_cell_inner" />
-        </td>
-    }
-
-    /*
     cx.render(rsx! {
         td {
             class: "plate_cell {selected_class}",
@@ -141,7 +87,6 @@ fn SourcePlateCell(props: &SourcePlateCellProps) -> Html {
             }
         }
     })
-    */
 }
 
 fn in_rect(corner1: Option<(u8, u8)>, corner2: Option<(u8, u8)>, pt: (u8, u8)) -> bool {

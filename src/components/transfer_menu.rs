@@ -1,33 +1,20 @@
 #![allow(non_snake_case)]
-use dioxus::prelude::*;
+use yew::prelude::*;
 use regex::Regex;
 use lazy_static::lazy_static;
 
-#[inline_props]
-pub fn TransferMenu(cx: Scope) -> Element {
-    cx.render(rsx! {
-        div {
-            class: "transfer_menu",
-            form{
-                label {
-                    r#for: "src_region",
-                    "Source Region:"
-                },
-                input {
-                    r#type: "text",
-                    name: "src_region",
-                },
-                label {
-                    r#for: "dest_region",
-                    "Destination Region:"
-                },
-                input {
-                    r#type: "text",
-                    name: "dest_region",
-                }
-            }
-        }
-    })
+#[function_component]
+pub fn TransferMenu() -> Html {
+    html! {
+        <div class="transfer_menu">
+            <form>
+                <label for="src_region">{"Source Region:"}</label>
+                <input type="text" name="src_region" />
+                <label for="dest_region">{"Destination Region:"}</label>
+                <input type="text" name="dest_region" />
+            </form>
+        </div>
+    }
 }
 
 #[derive(PartialEq, Eq, Debug)]
