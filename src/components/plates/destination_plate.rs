@@ -29,23 +29,6 @@ pub fn DestinationPlate(props: &DestinationPlateProps) -> Html {
             </table>
         </div>
     }
-    /*
-    cx.render(rsx! {
-        div {
-            class: "dest_plate",
-            table {
-                for i in 1..=cx.props.height {
-                    tr {
-                        draggable: "false",
-                        for j in 1..=cx.props.width {
-                            DestPlateCell {i: i, j: j}
-                        }
-                    }
-                },
-            }
-        }
-    })
-    */
 }
 
 #[derive(Properties, PartialEq)]
@@ -57,7 +40,7 @@ pub struct DestPlateCellProps {
 
 #[function_component]
 fn DestPlateCell(props: &DestPlateCellProps) -> Html {
-    let color_string = match &props.color {
+    let _color_string = match &props.color {
         Some(c) => c.clone(),
         None => "None".to_string(),
     };
@@ -67,16 +50,4 @@ fn DestPlateCell(props: &DestPlateCellProps) -> Html {
             <div class="plate_cell_inner" />
         </td>
     }
-    /*
-    cx.render(rsx! {
-        td {
-            class: "plate_cell",
-            draggable: "false",
-            style: "background: {color_string}",
-            div {
-                class: "plate_cell_inner"
-            }
-        }
-    })
-    */
 }
