@@ -33,10 +33,10 @@ pub fn TransferMenu(cx: Scope) -> Element {
 #[derive(PartialEq, Eq, Debug)]
 struct RegionDisplay {
     text: String,
-    row_start: u8,
-    row_end: u8,
     col_start: u8,
-    col_end: u8
+    row_start: u8,
+    col_end: u8,
+    row_end: u8,
 }
 
 impl TryFrom<String> for RegionDisplay {
@@ -48,16 +48,17 @@ impl TryFrom<String> for RegionDisplay {
         }
         if let Some(captures) = REGION_REGEX.captures(&value) {
             if captures.len() != 5 { return Err("Not enough capture groups") }
-            let col_start = letters_to_num(&captures[1]).ok_or("Row start failed to parse")?;
-            let col_end = letters_to_num(&captures[3]).ok_or("Row end failed to parse")?;
-            let row_start: u8 = captures[2].parse::<u8>().or(Err("Col start failed to parse"))?;
-            let row_end: u8 = captures[4].parse::<u8>().or(Err("Col end failed to parse"))?;
+            let col_start = letters_to_num(&captures[1]).ok_or("Column start failed to parse")?;
+            let col_end = letters_to_num(&captures[3]).ok_or("Column end failed to parse")?;
+            let row_start: u8 = captures[2].parse::<u8>().or(Err("Row start failed to parse"))?;
+            let row_end: u8 = captures[4].parse::<u8>().or(Err("Row end failed to parse"))?;
             return Ok(RegionDisplay { 
                 text: value,
-                row_start,
-                row_end,
                 col_start,
-                col_end })
+                row_start,
+                col_end,
+                row_end,
+                })
         } else {
             return Err("Regex match failed")
         }
@@ -68,8 +69,17 @@ impl TryFrom<(u8,u8,u8,u8)> for RegionDisplay {
     type Error =  &'static str;
 
     fn try_from(value: (u8,u8,u8,u8)) -> Result<Self, Self::Error> {
+        // (Column Start, Row Start, Column End, Row End)
         // This can only possibly fail if one of the coordinates is zero...
-        Err("ni")
+        let cs = num_to_letters(value.0).ok_or("Column start failed to parse")?;
+        let ce = num_to_letters(value.2).ok_or("Column end failed to parse")?;
+        Ok(RegionDisplay {
+            text: format!("{}{}:{}{}", cs, value.1, ce, value.3),
+            col_start: value.0,
+            row_start: value.1,
+            col_end: value.2,
+            row_end: value.3,
+        })
     }
 }
 fn letters_to_num(letters: &str) -> Option<u8> {
