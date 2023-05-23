@@ -2,7 +2,7 @@ use yew::prelude::*;
 use yewdux::prelude::*;
 
 use wasm_bindgen::JsCast;
-use web_sys::{EventTarget, HtmlFormElement, FormData};
+use web_sys::{EventTarget, HtmlFormElement, FormData, HtmlDialogElement};
 
 use crate::data::{plate_instances::PlateInstance, transfer::Transfer};
 use crate::data::plate::*;
@@ -33,25 +33,39 @@ pub fn NewPlateDialog(props: &NewPlateDialogProps) -> Html {
                         "96" => PlateFormat::W96,
                         _ => PlateFormat::W6,
                     };
-                    let plate_type = match form_data.get("new_plate_type").as_string().unwrap().as_str() {
-                        "src" => PlateType::Source,
-                        "dest" => PlateType::Destination,
-                        _ => PlateType::Source,
-                    };
-                    dispatch.reduce_mut(|s| {
-                        if plate_type == PlateType::Source {
-                            s.add_source_plate(PlateInstance::new(PlateType::Source, format, name))
-                        } else {
-                            s.add_dest_plate(PlateInstance::new(PlateType::Destination, format, name))
-                        }
-                    });
+                    if let Some(pt_string) = form_data.get("new_plate_type").as_string() {
+                        let plate_type = match pt_string.as_str() {
+                            "src" => PlateType::Source,
+                            "dest" => PlateType::Destination,
+                            _ => PlateType::Source,
+                        };
+                        dispatch.reduce_mut(|s| {
+                            if plate_type == PlateType::Source {
+                                s.add_source_plate(PlateInstance::new(PlateType::Source, format, name))
+                            } else {
+                                s.add_dest_plate(PlateInstance::new(PlateType::Destination, format, name))
+                            }
+                        });
+                    }
                 }
             }
         })
     };
 
+    // This whole section is optional, only if you want the backdrop
+    let dialog_ref = use_node_ref();
+    {
+        let dialog_ref = dialog_ref.clone();
+
+        use_effect_with_deps(|dialog_ref| {
+            dialog_ref.cast::<HtmlDialogElement>().unwrap().show_modal().ok();
+        },
+        dialog_ref);
+    }
+
     html! {
-        <dialog open=true>
+        <dialog ref={dialog_ref} class="dialog new_plate_dialog">
+            <h2>{"Create a plate:"}</h2>
             <form onsubmit={new_plate_callback}>
             <input type="text" name="new_plate_name" placeholder="Name"/>
             <select name="plate_format">
