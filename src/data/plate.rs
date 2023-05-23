@@ -1,4 +1,6 @@
-#[derive(PartialEq, Eq, Clone, Copy)]
+use serde::{Serialize, Deserialize};
+
+#[derive(PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
 pub struct Plate {
     pub plate_type: PlateType,
     pub plate_format: PlateFormat,
@@ -17,13 +19,13 @@ impl Plate {
     }
 }
 
-#[derive(PartialEq, Eq, Clone, Copy)]
+#[derive(PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
 pub enum PlateType {
     Source,
     Destination,
 }
 
-#[derive(PartialEq, Eq, Clone, Copy)]
+#[derive(PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
 pub enum PlateFormat {
     W6,
     W12,

@@ -1,5 +1,6 @@
 #![allow(non_snake_case)]
 
+use serde::{Serialize, Deserialize};
 use yew::prelude::*;
 use yewdux::prelude::*;
 use wasm_bindgen::JsCast;
@@ -86,7 +87,7 @@ pub fn TransferMenu() -> Html {
     }
 }
 
-#[derive(PartialEq, Eq, Debug, Clone, Default)]
+#[derive(PartialEq, Eq, Debug, Clone, Default, Serialize, Deserialize)]
 pub struct RegionDisplay {
     pub text: String,
     pub col_start: u8,

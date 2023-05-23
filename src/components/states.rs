@@ -1,10 +1,12 @@
-use yewdux::prelude::*;
+use serde::{Serialize, Deserialize};
+use yewdux::{prelude::*, storage};
 use super::transfer_menu::RegionDisplay;
 use crate::data::plate_instances::PlateInstance;
 use crate::data::transfer::Transfer;
 use crate::data::plate::*;
 
-#[derive(Debug, Default, Clone, PartialEq, Store)]
+#[derive(Debug, Default, Clone, PartialEq, Serialize, Deserialize, Store)]
+#[store(storage = "session")]
 pub struct NewTransferState {
     pub source_region: RegionDisplay,
     pub destination_region: RegionDisplay,
@@ -12,7 +14,7 @@ pub struct NewTransferState {
     pub interleave_y: u8,
 }
 
-#[derive(Default, PartialEq, Clone)]
+#[derive(Default, PartialEq, Clone, Serialize, Deserialize)]
 pub struct MainState {
     pub source_plates: Vec<PlateInstance>,
     pub destination_plates: Vec<PlateInstance>,
@@ -21,11 +23,18 @@ pub struct MainState {
 
 impl Store for MainState {
     fn new() -> Self {
+        init_listener(storage::StorageListener::<Self>::new(storage::Area::Local));
+
+        storage::load(storage::Area::Local)
+            .expect("Unable to load state")
+            .unwrap_or_default()
+        /*
         Self {
             source_plates: Vec::new(),
             destination_plates: Vec::new(),
             transfers: Vec::new(),
         }
+        */
     }
 
     fn should_notify(&self, old: &Self) -> bool {

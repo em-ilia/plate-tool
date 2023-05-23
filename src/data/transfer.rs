@@ -1,8 +1,10 @@
+use serde::Deserialize;
+use serde::Serialize;
 use uuid::Uuid;
 use super::transfer_region::*;
 use super::plate_instances::*;
 
-#[derive(PartialEq, Clone, Copy)]
+#[derive(PartialEq, Clone, Copy, Serialize, Deserialize)]
 pub struct Transfer {
     pub source_id: Uuid,
     pub dest_id: Uuid,

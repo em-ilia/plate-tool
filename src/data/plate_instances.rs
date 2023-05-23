@@ -1,7 +1,8 @@
 use uuid::Uuid;
+use serde::{Serialize, Deserialize};
 use super::plate::*;
 
-#[derive(PartialEq, Clone)]
+#[derive(PartialEq, Clone, Serialize, Deserialize)]
 pub struct PlateInstance {
     pub plate: Plate,
     id: Uuid,
