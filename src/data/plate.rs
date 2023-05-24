@@ -54,14 +54,14 @@ impl std::fmt::Display for PlateFormat {
 impl PlateFormat {
     pub fn size(&self) -> (u8, u8) {
         match self {
-            PlateFormat::W6 => (2, 3),
-            PlateFormat::W12 => (3, 4),
-            PlateFormat::W24 => (4, 6),
-            PlateFormat::W48 => (6, 8),
-            PlateFormat::W96 => (8, 12),
-            PlateFormat::W384 => (16, 24),
-            PlateFormat::W1536 => (32, 48),
-            PlateFormat::W3456 => (48, 72),
+            PlateFormat::W6    => (3, 2),
+            PlateFormat::W12   => (4, 3),
+            PlateFormat::W24   => (6, 4),
+            PlateFormat::W48   => (8, 6),
+            PlateFormat::W96   => (12, 8),
+            PlateFormat::W384  => (24, 16),
+            PlateFormat::W1536 => (48, 32),
+            PlateFormat::W3456 => (72, 48),
         }
     }
 }

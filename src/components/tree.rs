@@ -9,6 +9,7 @@ use yewdux::prelude::*;
 use crate::data::{plate_instances::PlateInstance, transfer::Transfer};
 use crate::data::plate::*;
 use crate::components::states::{MainState, NewTransferState};
+use crate::components::transfer_menu::RegionDisplay;
 
 #[derive(PartialEq, Properties)]
 pub struct TreeProps {
@@ -57,7 +58,10 @@ pub fn Tree(props: &TreeProps) -> Html {
             let li = target.and_then(|t| t.dyn_into::<HtmlElement>().ok());
             if let Some(li) = li {
                 if let Ok(id) = u128::from_str_radix(li.id().as_str(), 10) {
-                    dispatch.reduce_mut(|state| state.source_id = Uuid::from_u128(id))
+                    dispatch.reduce_mut(|state| {
+                        state.source_region = RegionDisplay::default();
+                        state.source_id = Uuid::from_u128(id);
+                    })
                 }
             }
         })
@@ -69,7 +73,10 @@ pub fn Tree(props: &TreeProps) -> Html {
             let li = target.and_then(|t| t.dyn_into::<HtmlElement>().ok());
             if let Some(li) = li {
                 if let Ok(id) = u128::from_str_radix(li.id().as_str(), 10) {
-                    dispatch.reduce_mut(|state| state.destination_id = Uuid::from_u128(id))
+                    dispatch.reduce_mut(|state| {
+                        state.destination_region = RegionDisplay::default();
+                        state.destination_id = Uuid::from_u128(id);
+                    })
                 }
             }
         })
