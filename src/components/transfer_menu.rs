@@ -25,6 +25,8 @@ pub fn TransferMenu() -> Html {
             if let Some(input) = input {
                 if let Ok(rd) = RegionDisplay::try_from(input.value()) {
                     dispatch.set( NewTransferState {
+                        source_id: state.source_id,
+                        destination_id: state.destination_id,
                         source_region: rd,
                         destination_region: state.destination_region.clone(),
                         interleave_x: state.interleave_x,
@@ -48,6 +50,8 @@ pub fn TransferMenu() -> Html {
             if let Some(input) = input {
                 if let Ok(rd) = RegionDisplay::try_from(input.value()) {
                     dispatch.set( NewTransferState {
+                        source_id: state.source_id,
+                        destination_id: state.destination_id,
                         source_region: state.source_region.clone(),
                         destination_region: rd,
                         interleave_x: state.interleave_x,

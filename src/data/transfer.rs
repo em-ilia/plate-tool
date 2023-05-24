@@ -8,7 +8,7 @@ use super::plate_instances::*;
 pub struct Transfer {
     pub source_id: Uuid,
     pub dest_id: Uuid,
-    pub transfer: TransferRegion,
+    pub transfer_region: TransferRegion,
 }
 
 impl Transfer {
@@ -16,7 +16,7 @@ impl Transfer {
         Self {
             source_id: source.get_uuid(),
             dest_id: dest.get_uuid(),
-            transfer: tr
+            transfer_region: tr
         }
     }
 }

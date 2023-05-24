@@ -34,6 +34,9 @@ div.tree {
 div.tree li {
 	user-select: none;
 }
+div.tree li.selected {
+	background: rgba(0,0,150,0.2);
+}
 
 div.transfer_menu {
 	grid-column: left / left;

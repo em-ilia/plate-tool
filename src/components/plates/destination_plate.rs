@@ -70,6 +70,8 @@ pub fn DestinationPlate(props: &DestinationPlateProps) -> Html {
                 if let Some(br) = *m_end_handle {
                     if let Ok(rd) = RegionDisplay::try_from((ul.0, ul.1, br.0, br.1)) {
                         dispatch.set(NewTransferState {
+                            source_id: current.source_id,
+                            destination_id: current.destination_id,
                             source_region: current.source_region.clone(),
                             destination_region: rd,
                             interleave_x: current.interleave_x,

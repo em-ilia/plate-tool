@@ -8,7 +8,7 @@ use yewdux::prelude::*;
 
 use crate::data::{plate_instances::PlateInstance, transfer::Transfer};
 use crate::data::plate::*;
-use crate::components::states::MainState;
+use crate::components::states::{MainState, NewTransferState};
 
 #[derive(PartialEq, Properties)]
 pub struct TreeProps {
@@ -17,11 +17,12 @@ pub struct TreeProps {
 
 #[function_component]
 pub fn Tree(props: &TreeProps) -> Html {
-    let (state, dispatch) = use_store::<MainState>();
-    let plate_menu_id: UseStateHandle<Option<Uuid>> = use_state(|| {None});
+    let (main_state, main_dispatch) = use_store::<MainState>();
+    let (selection_state, selection_dispatch) = use_store::<NewTransferState>();
+    let plate_modal_id: UseStateHandle<Option<Uuid>> = use_state(|| {None});
 
     let open_plate_info_callback = {
-        let plate_menu_id =plate_menu_id.clone();
+        let plate_menu_id =plate_modal_id.clone();
         Callback::from(move |e: MouseEvent| {
             let target: Option<EventTarget> = e.target();
             let li = target.and_then(|t| t.dyn_into::<HtmlElement>().ok());
@@ -33,14 +34,14 @@ pub fn Tree(props: &TreeProps) -> Html {
         })
     };
     let plate_info_close_callback = {
-        let plate_menu_id =plate_menu_id.clone();
+        let plate_menu_id =plate_modal_id.clone();
         Callback::from(move |_| {
             plate_menu_id.set(None);
         })
     };
     let plate_info_delete_callback = {
-        let dispatch = dispatch.clone();
-        let plate_menu_id =plate_menu_id.clone();
+        let dispatch = main_dispatch.clone();
+        let plate_menu_id = plate_modal_id.clone();
         Callback::from(move |_| {
             if let Some(id) = *plate_menu_id {
                 dispatch.reduce_mut(|state| {
@@ -49,16 +50,52 @@ pub fn Tree(props: &TreeProps) -> Html {
             }
         })
     };
+    let source_plate_select_callback = {
+        let dispatch = selection_dispatch.clone();
+        Callback::from(move |e: MouseEvent| {
+            let target: Option<EventTarget> = e.target();
+            let li = target.and_then(|t| t.dyn_into::<HtmlElement>().ok());
+            if let Some(li) = li {
+                if let Ok(id) = u128::from_str_radix(li.id().as_str(), 10) {
+                    dispatch.reduce_mut(|state| state.source_id = Uuid::from_u128(id))
+                }
+            }
+        })
+    };
+    let destination_plate_select_callback = {
+        let dispatch = selection_dispatch.clone();
+        Callback::from(move |e: MouseEvent| {
+            let target: Option<EventTarget> = e.target();
+            let li = target.and_then(|t| t.dyn_into::<HtmlElement>().ok());
+            if let Some(li) = li {
+                if let Ok(id) = u128::from_str_radix(li.id().as_str(), 10) {
+                    dispatch.reduce_mut(|state| state.destination_id = Uuid::from_u128(id))
+                }
+            }
+        })
+    };
 
-    let source_plates = state.source_plates.iter()
+    let source_plates = main_state.source_plates.iter()
         .map(|spi| {
             html!{ <li id={spi.get_uuid().as_u128().to_string()}
-                    ondblclick={open_plate_info_callback.clone()}> {String::from(spi)} </li> }
+                    ondblclick={open_plate_info_callback.clone()}
+                    onclick={source_plate_select_callback.clone()}
+                    class={classes!(
+                        Some(if spi.get_uuid() == selection_state.source_id {Some("selected")}
+                             else {None})
+                    )}>
+                        {String::from(spi)}
+                        </li> }
         }).collect::<Html>();
-    let dest_plates = state.destination_plates.iter()
-        .map(|spi| {
-            html!{ <li id={spi.get_uuid().as_u128().to_string()}
-                    ondblclick={open_plate_info_callback.clone()}> {String::from(spi)} </li> }
+    let dest_plates = main_state.destination_plates.iter()
+        .map(|dpi| {
+            html!{ <li id={dpi.get_uuid().as_u128().to_string()}
+                    ondblclick={open_plate_info_callback.clone()}
+                    onclick={destination_plate_select_callback.clone()}
+                    class={classes!(
+                        Some(if dpi.get_uuid() == selection_state.destination_id {Some("selected")}
+                             else {None})
+                    )}> {String::from(dpi)} </li> }
         }).collect::<Html>();
 
 
@@ -81,7 +118,7 @@ pub fn Tree(props: &TreeProps) -> Html {
             <ul>
             </ul>
             </div>
-            if let Some(id) = *plate_menu_id {
+            if let Some(id) = *plate_modal_id {
                 <PlateInfoModal id={id} dialog_close_callback={plate_info_close_callback}
                 delete_button_callback={plate_info_delete_callback}/>
             }

@@ -10,6 +10,8 @@ use crate::data::plate::*;
 #[derive(Debug, Default, Clone, PartialEq, Serialize, Deserialize, Store)]
 #[store(storage = "session")]
 pub struct NewTransferState {
+    pub source_id: Uuid,
+    pub destination_id: Uuid,
     pub source_region: RegionDisplay,
     pub destination_region: RegionDisplay,
     pub interleave_x: u8,
