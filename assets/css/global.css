@@ -31,6 +31,9 @@ div.tree {
 	height: 100%;
 	border: 2px solid green;
 }
+div.tree li {
+	user-select: none;
+}
 
 div.transfer_menu {
 	grid-column: left / left;

@@ -1,5 +1,7 @@
 use serde::{Serialize, Deserialize};
 use yewdux::{prelude::*, storage};
+use uuid::Uuid;
+
 use super::transfer_menu::RegionDisplay;
 use crate::data::plate_instances::PlateInstance;
 use crate::data::transfer::Transfer;
@@ -65,5 +67,13 @@ impl MainState {
     pub fn add_dest_plate(&mut self, plate: PlateInstance) {
         assert!(plate.plate.plate_type == PlateType::Destination);
         self.destination_plates.push(plate);
+    }
+    pub fn del_plate(&mut self, id: Uuid) {
+        if let Some(index) = self.source_plates.iter().position(|spi| {spi.get_uuid() == id}) {
+            self.source_plates.swap_remove(index);
+        }
+        if let Some(index) = self.destination_plates.iter().position(|dpi| {dpi.get_uuid() == id}) {
+            self.destination_plates.swap_remove(index);
+        }
     }
 }
