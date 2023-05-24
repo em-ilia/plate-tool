@@ -2,7 +2,7 @@
 use yew::prelude::*;
 use yewdux::prelude::*;
 
-use super::states::{MainState, NewTransferState};
+use super::states::{MainState, NewTransferState, CurrentTransfer};
 use super::plates::plate_container::PlateContainer;
 use super::tree::Tree;
 use super::transfer_menu::TransferMenu;
@@ -14,13 +14,24 @@ use crate::data::plate_instances::PlateInstance;
 pub fn MainWindow() -> Html {
     let (main_state, main_dispatch) = use_store::<MainState>();
     let (selection_state, selection_dispatch) = use_store::<NewTransferState>();
+    let (ct_state, ct_dispatch) = use_store::<CurrentTransfer>();
 
     let source_plate_instance: Option<PlateInstance> = main_state.source_plates.iter()
         .find(|spi| {spi.get_uuid() == selection_state.source_id})
         .cloned();
+    if let Some(spi) = source_plate_instance.clone() {
+    ct_dispatch.reduce_mut(|state| {
+        state.transfer.source_plate = spi.plate;
+        });
+    }
     let destination_plate_instance: Option<PlateInstance> = main_state.destination_plates.iter()
         .find(|dpi| {dpi.get_uuid() == selection_state.destination_id})
         .cloned();
+    if let Some(dpi) = destination_plate_instance.clone() {
+    ct_dispatch.reduce_mut(|state| {
+        state.transfer.dest_plate = dpi.plate;
+        });
+    }
 
     let new_plate_dialog_is_open = use_state_eq(|| false);
     let new_plate_dialog_callback = {

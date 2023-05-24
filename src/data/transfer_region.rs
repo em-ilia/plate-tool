@@ -7,6 +7,11 @@ pub enum Region {
     Rect((u8, u8), (u8, u8)),
     Point((u8, u8)),
 }
+impl Default for Region {
+    fn default() -> Self {
+        Region::Point((1,1))
+    }
+}
 impl TryFrom<Region> for ((u8, u8), (u8, u8)) {
     type Error = &'static str;
     fn try_from(region: Region) -> Result<Self, Self::Error> {
@@ -19,7 +24,7 @@ impl TryFrom<Region> for ((u8, u8), (u8, u8)) {
     }
 }
 
-#[derive(PartialEq, Eq, Clone, Copy, Serialize, Deserialize, Debug)]
+#[derive(PartialEq, Eq, Default, Clone, Copy, Serialize, Deserialize, Debug)]
 pub struct TransferRegion {
     pub source_plate: Plate,
     pub source_region: Region, // Even if it is just a point, we don't want corners.
@@ -31,7 +36,8 @@ pub struct TransferRegion {
 
 impl TransferRegion {
     pub fn get_source_wells(&self) -> Vec<(u8, u8)> {
-        if let Region::Rect(c1, c2) = self.source_region {
+        match self.source_region {
+            Region::Rect(c1, c2) => {
             let mut wells = Vec::<(u8, u8)>::new();
             let (ul, br) = standardize_rectangle(&c1, &c2);
             let (interleave_i, interleave_j) = self.interleave_source.unwrap_or((1, 1));
@@ -50,21 +56,25 @@ impl TransferRegion {
                 }
             }
             return wells;
-        } else {
-            panic!("Source region is just a point!")
+            },
+            Region::Point(p) => return vec![p]
         }
     }
+
     pub fn get_destination_wells(&self) -> Vec<(u8, u8)> {
         let map = self.calculate_map();
         let source_wells = self.get_source_wells();
 
         let mut wells = Vec::<(u8, u8)>::new();
 
+        log::debug!("GDW:");
         for well in source_wells {
             if let Some(mut dest_wells) = map(well) {
+                log::debug!("Map {:?} to {:?}", well, dest_wells);
                 wells.append(&mut dest_wells);
             }
         }
+        log::debug!("GDW END.");
 
         return wells;
     }
@@ -74,6 +84,7 @@ impl TransferRegion {
         // this function will not panic. :)
         if let Err(msg) = self.validate() {
             eprintln!("{}", msg);
+            log::debug!("{}", msg);
             eprintln!("This transfer will be empty.");
             return Box::new(|(_, _)| None);
         }
@@ -82,10 +93,10 @@ impl TransferRegion {
         let il_dest = self.interleave_dest.unwrap_or((1, 1));
         let il_source = self.interleave_source.unwrap_or((1, 1));
 
-        let source_corners: ((u8, u8), (u8, u8)) = self
-            .source_region
-            .try_into()
-            .expect("Source region should not be a point");
+        let source_corners: ((u8, u8), (u8, u8)) = match self.source_region {
+            Region::Point((x,y)) => ((x,y),(x,y)),
+            Region::Rect(c1,c2) => (c1,c2)
+        };
         let (source_ul, _) = standardize_rectangle(&source_corners.0, &source_corners.1);
         // This map is not necessarily injective or surjective,
         // but we will have these properties in certain cases.
@@ -132,24 +143,6 @@ impl TransferRegion {
                             s2.1.checked_sub(s1.1).unwrap() + 1,
                         );
 
-                        /*
-                        println!("{} % {} == {}", i, dims.0, i*il_dest.0.abs() as u8 % dims.0);
-                        for a in ds1.0..=ds2.0 {
-                            for b in ds1.1..=ds2.1 {
-                                println!("({},{}): {} % {} == {}", a, b,
-                                a.checked_sub(ds1.0).unwrap()+1, dims.0,
-                                (a.checked_sub(ds1.0).unwrap()+1) % dims.0);
-                            }
-                        }
-                        for a in ds1.0..=ds2.0 {
-                            for b in ds1.1..=ds2.1 {
-                                println!("({},{}): {} % {} == {}", a, b,
-                                a.checked_sub(ds1.0).unwrap()+1, il_dest.0.abs() as u8,
-                                (a.checked_sub(ds1.0).unwrap()+1) % il_dest.0.abs() as u8);
-                            }
-                        }
-                        */
-
                         Some(
                             possible_destination_wells
                                 .into_iter()
@@ -187,7 +180,8 @@ impl TransferRegion {
         let il_dest = self.interleave_dest.unwrap_or((1, 1));
 
         match self.source_region {
-            Region::Point(_) => return Err("Source region should not be a point!"),
+            Region::Point(_) => return Ok(()), // Should make sure it's actually in the plate, leave for
+                                               // later
             Region::Rect(s1, s2) => {
                 // Check if all source wells exist:
                 if s1.0 == 0 || s1.1 == 0 || s2.0 == 0 || s2.1 == 0 {
@@ -199,6 +193,7 @@ impl TransferRegion {
                     return Err("Source region is out-of-bounds! (Too tall)");
                 }
                 if s1.1 > source_max.1 || s2.1 > source_max.1 {
+                    log::debug!("s1.1: {}, max.1: {}", s1.1, source_max.1);
                     return Err("Source region is out-of-bounds! (Too wide)");
                 }
                 // Check that source lengths divide destination lengths

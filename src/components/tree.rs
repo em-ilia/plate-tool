@@ -6,9 +6,7 @@ use web_sys::{EventTarget, HtmlElement, HtmlDialogElement};
 use yew::prelude::*;
 use yewdux::prelude::*;
 
-use crate::data::{plate_instances::PlateInstance, transfer::Transfer};
-use crate::data::plate::*;
-use crate::components::states::{MainState, NewTransferState};
+use crate::components::states::{MainState, NewTransferState, CurrentTransfer};
 use crate::components::transfer_menu::RegionDisplay;
 
 #[derive(PartialEq, Properties)]

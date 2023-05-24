@@ -1,6 +1,6 @@
 use serde::{Serialize, Deserialize};
 
-#[derive(PartialEq, Eq, Clone, Copy, Serialize, Deserialize, Debug)]
+#[derive(PartialEq, Eq, Default, Clone, Copy, Serialize, Deserialize, Debug)]
 pub struct Plate {
     pub plate_type: PlateType,
     pub plate_format: PlateFormat,
@@ -24,6 +24,11 @@ pub enum PlateType {
     Source,
     Destination,
 }
+impl Default for PlateType {
+    fn default() -> Self {
+        Self::Source
+    }
+}
 
 #[derive(PartialEq, Eq, Clone, Copy, Serialize, Deserialize, Debug)]
 pub enum PlateFormat {
@@ -35,6 +40,11 @@ pub enum PlateFormat {
     W384,
     W1536,
     W3456,
+}
+impl Default for PlateFormat {
+    fn default() -> Self {
+        Self::W96
+    }
 }
 impl std::fmt::Display for PlateFormat {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -53,6 +63,7 @@ impl std::fmt::Display for PlateFormat {
 
 impl PlateFormat {
     pub fn size(&self) -> (u8, u8) {
+        /*
         match self {
             PlateFormat::W6    => (3, 2),
             PlateFormat::W12   => (4, 3),
@@ -62,6 +73,17 @@ impl PlateFormat {
             PlateFormat::W384  => (24, 16),
             PlateFormat::W1536 => (48, 32),
             PlateFormat::W3456 => (72, 48),
+        }
+        */
+        match self {
+            PlateFormat::W6    => (2, 3),
+            PlateFormat::W12   => (3, 4),
+            PlateFormat::W24   => (4, 6),
+            PlateFormat::W48   => (6, 8),
+            PlateFormat::W96   => (8, 12),
+            PlateFormat::W384  => (16, 24),
+            PlateFormat::W1536 => (32, 48),
+            PlateFormat::W3456 => (48, 72),
         }
     }
 }

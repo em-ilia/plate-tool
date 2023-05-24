@@ -17,20 +17,20 @@ pub fn PlateContainer(props: &PlateContainerProps) -> Html {
     html! {
         <div class="plate_container">
             if let Some(spi) = props.source_dims.clone() {
-            <div>
-                <h2>{spi.name.clone()}</h2>
-                <SourcePlate plate={spi} />
-            </div>
-            } else {
-                <h2>{"No Source Plate Selected"}</h2>
-            }
             if let Some(dpi) = props.destination_dims.clone() {
             <div>
+                <h2>{spi.name.clone()}</h2>
+                <SourcePlate source_plate={spi.clone()} destination_plate={dpi.clone()} />
+            </div>
+            <div>
                 <h2>{dpi.name.clone()}</h2>
-                <DestinationPlate plate={dpi} />
+                <DestinationPlate source_plate={spi.clone()} destination_plate={dpi.clone()} />
             </div>
             } else {
                 <h2>{"No Destination Plate Selected"}</h2>
+            }
+            } else {
+                <h2>{"No Source Plate Selected"}</h2>
             }
         </div>
     }

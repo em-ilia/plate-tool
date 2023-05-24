@@ -6,6 +6,7 @@ use super::transfer_menu::RegionDisplay;
 use crate::data::plate_instances::PlateInstance;
 use crate::data::transfer::Transfer;
 use crate::data::plate::*;
+use crate::data::transfer_region::TransferRegion;
 
 #[derive(Debug, Default, Clone, PartialEq, Serialize, Deserialize, Store)]
 #[store(storage = "session")]
@@ -14,8 +15,14 @@ pub struct NewTransferState {
     pub destination_id: Uuid,
     pub source_region: RegionDisplay,
     pub destination_region: RegionDisplay,
-    pub interleave_x: u8,
-    pub interleave_y: u8,
+    pub interleave_x: i8,
+    pub interleave_y: i8,
+}
+
+#[derive(Debug, Default, Clone, PartialEq, Serialize, Deserialize, Store)]
+#[store(storage = "session")]
+pub struct CurrentTransfer {
+    pub transfer: TransferRegion,
 }
 
 #[derive(Default, PartialEq, Clone, Serialize, Deserialize)]
