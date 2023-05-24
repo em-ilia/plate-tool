@@ -24,13 +24,8 @@ pub fn TransferMenu() -> Html {
             let input = target.and_then(|t| t.dyn_into::<HtmlInputElement>().ok());
             if let Some(input) = input {
                 if let Ok(rd) = RegionDisplay::try_from(input.value()) {
-                    dispatch.set( NewTransferState {
-                        source_id: state.source_id,
-                        destination_id: state.destination_id,
-                        source_region: rd,
-                        destination_region: state.destination_region.clone(),
-                        interleave_x: state.interleave_x,
-                        interleave_y: state.interleave_y
+                    dispatch.reduce_mut(|state| {
+                        state.source_region = rd;
                     });
                     input.set_custom_validity("");
                 } else {
@@ -49,13 +44,8 @@ pub fn TransferMenu() -> Html {
             let input = target.and_then(|t| t.dyn_into::<HtmlInputElement>().ok());
             if let Some(input) = input {
                 if let Ok(rd) = RegionDisplay::try_from(input.value()) {
-                    dispatch.set( NewTransferState {
-                        source_id: state.source_id,
-                        destination_id: state.destination_id,
-                        source_region: state.source_region.clone(),
-                        destination_region: rd,
-                        interleave_x: state.interleave_x,
-                        interleave_y: state.interleave_y
+                    dispatch.reduce_mut(|state| {
+                        state.destination_region = rd;
                     });
                     input.set_custom_validity("");
                 } else {

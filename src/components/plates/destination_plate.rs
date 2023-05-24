@@ -1,6 +1,7 @@
 #![allow(non_snake_case)]
 use yew::prelude::*;
 use yewdux::prelude::*;
+use std::intrinsics::discriminant_value;
 use std::rc::Rc;
 
 use super::super::states::NewTransferState;
@@ -36,7 +37,6 @@ pub fn DestinationPlate(props: &DestinationPlateProps) -> Html {
     };
     let dispatch = Dispatch::<NewTransferState>::subscribe(menu_sync_callback);
 
-
     let mouse_callback = {
         let m_start_handle = m_start_handle.clone();
         let m_end_handle = m_end_handle.clone();
@@ -69,13 +69,9 @@ pub fn DestinationPlate(props: &DestinationPlateProps) -> Html {
             if let Some(ul) = *m_start_handle {
                 if let Some(br) = *m_end_handle {
                     if let Ok(rd) = RegionDisplay::try_from((ul.0, ul.1, br.0, br.1)) {
-                        dispatch.set(NewTransferState {
-                            source_id: current.source_id,
-                            destination_id: current.destination_id,
-                            source_region: current.source_region.clone(),
-                            destination_region: rd,
-                            interleave_x: current.interleave_x,
-                            interleave_y: current.interleave_y })
+                        dispatch.reduce_mut(|state| {
+                            state.destination_region = rd;
+                        });
                     }
                 }
             }

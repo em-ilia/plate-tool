@@ -64,18 +64,13 @@ pub fn SourcePlate(props: &SourcePlateProps) -> Html {
         let m_stat_handle = m_stat_handle.clone();
 
         Callback::from(move |_: MouseEvent| {
-        let current = dispatch.get();
         m_stat_handle.set(false);
         if let Some(ul) = *m_start_handle {
             if let Some(br) = *m_end_handle {
                 if let Ok(rd) = RegionDisplay::try_from((ul.0, ul.1, br.0, br.1)) {
-                    dispatch.set(NewTransferState {
-                        source_id: current.source_id,
-                        destination_id: current.destination_id,
-                        source_region: rd,
-                        destination_region: current.destination_region.clone(),
-                        interleave_x: current.interleave_x,
-                        interleave_y: current.interleave_y })
+                    dispatch.reduce_mut(|state| {
+                        state.source_region = rd;
+                    });
                 }
             }
         }
