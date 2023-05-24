@@ -4,13 +4,15 @@ use yew::prelude::*;
 use yewdux::prelude::*;
 use std::rc::Rc;
 
+use crate::data::plate_instances::PlateInstance;
+use crate::data::transfer_region::TransferRegion;
+
 use super::super::states::NewTransferState;
 use super::super::transfer_menu::RegionDisplay;
 
 #[derive(PartialEq, Properties)]
 pub struct SourcePlateProps {
-    pub width: u8,
-    pub height: u8,
+    pub plate: PlateInstance,
 }
 
 #[function_component]
@@ -79,8 +81,8 @@ pub fn SourcePlate(props: &SourcePlateProps) -> Html {
 
     let mouseleave_callback = Callback::clone(&mouseup_callback);
 
-    let rows = (1..=props.height).map(|i| {
-        let row = (1..=props.width).map(|j| {
+    let rows = (1..=props.plate.plate.size().1).map(|i| {
+        let row = (1..=props.plate.plate.size().0).map(|j| {
             html! {
                 <SourcePlateCell i={i} j={j}
                 selected={in_rect(*m_start.clone(), *m_end.clone(), (i,j))}
