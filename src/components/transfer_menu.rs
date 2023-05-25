@@ -10,15 +10,13 @@ use lazy_static::lazy_static;
 
 use crate::data::transfer_region::Region;
 
-use super::states::{NewTransferState, CurrentTransfer};
+use super::states::{CurrentTransfer};
 
 #[function_component]
 pub fn TransferMenu() -> Html {
-    let (state, dispatch) = use_store::<NewTransferState>();
     let (ct_state, ct_dispatch) = use_store::<CurrentTransfer>();
 
     let on_src_region_change = {
-        let dispatch = dispatch.clone();
         let ct_dispatch = ct_dispatch.clone();
 
         Callback::from(move |e: Event| {
@@ -29,9 +27,6 @@ pub fn TransferMenu() -> Html {
                     ct_dispatch.reduce_mut(|state| {
                         state.transfer.source_region = Region::from(&rd);
                     });
-                    dispatch.reduce_mut(|state| {
-                        state.source_region = rd;
-                    });
                     input.set_custom_validity("");
                 } else {
                     input.set_custom_validity("Invalid region.")
@@ -40,7 +35,6 @@ pub fn TransferMenu() -> Html {
         })
     };
     let on_dest_region_change = {
-        let dispatch = dispatch.clone();
         let ct_dispatch = ct_dispatch.clone();
 
         Callback::from(move |e: Event| {
@@ -51,9 +45,6 @@ pub fn TransferMenu() -> Html {
                     ct_dispatch.reduce_mut(|state| {
                         state.transfer.dest_region = Region::from(&rd);
                     });
-                    dispatch.reduce_mut(|state| {
-                        state.destination_region = rd;
-                    });
                     input.set_custom_validity("");
                 } else {
                     input.set_custom_validity("Invalid region.")
@@ -63,8 +54,6 @@ pub fn TransferMenu() -> Html {
     };
     
     let on_dest_interleave_x_change = {
-        let dispatch = dispatch.clone();
-        let ct_state = ct_state.clone();
         let ct_dispatch = ct_dispatch.clone();
 
         Callback::from(move |e: Event| {
@@ -72,9 +61,6 @@ pub fn TransferMenu() -> Html {
             let input = target.and_then(|t| t.dyn_into::<HtmlInputElement>().ok());
             if let Some(input) = input {
                 if let Ok(num) = input.value().parse::<i8>() {
-                    dispatch.reduce_mut(|state| {
-                        state.interleave_x = num;
-                    });
                     ct_dispatch.reduce_mut(|state| {
                         state.transfer.interleave_dest = (num, state.transfer.interleave_dest.1);
                     });
@@ -83,8 +69,6 @@ pub fn TransferMenu() -> Html {
         })
     };
     let on_dest_interleave_y_change = {
-        let dispatch = dispatch.clone();
-        let ct_state = ct_state.clone();
         let ct_dispatch = ct_dispatch.clone();
 
         Callback::from(move |e: Event| {
@@ -92,9 +76,6 @@ pub fn TransferMenu() -> Html {
             let input = target.and_then(|t| t.dyn_into::<HtmlInputElement>().ok());
             if let Some(input) = input {
                 if let Ok(num) = input.value().parse::<i8>() {
-                    dispatch.reduce_mut(|state| {
-                        state.interleave_y = num;
-                    });
                     ct_dispatch.reduce_mut(|state| {
                         state.transfer.interleave_dest = (state.transfer.interleave_dest.0, num);
                     });
@@ -109,21 +90,23 @@ pub fn TransferMenu() -> Html {
             <div>
                 <label for="src_region">{"Source Region:"}</label>
                 <input type="text" name="src_region"
-                onchange={on_src_region_change} value={state.source_region.text.clone()}/>
+                onchange={on_src_region_change}
+                value={RegionDisplay::from(&ct_state.transfer.source_region).text}/>
             </div>
             <div>
                 <label for="dest_region">{"Destination Region:"}</label>
                 <input type="text" name="dest_region"
-                onchange={on_dest_region_change} value={state.destination_region.text.clone()}/>
+                onchange={on_dest_region_change}
+                value={RegionDisplay::from(&ct_state.transfer.dest_region).text}/>
             </div>
             <div>
             {"Destination Interleave "}
             <label for="dest_interleave_x">{"X:"}</label>
             <input type="number" name="dest_interleave_x"
-            onchange={on_dest_interleave_x_change} value={state.interleave_x.to_string()}/>
+            onchange={on_dest_interleave_x_change} value={ct_state.transfer.interleave_dest.0.to_string()}/>
             <label for="dest_interleave_y">{"Y:"}</label>
             <input type="number" name="dest_interleave_y"
-            onchange={on_dest_interleave_y_change} value={state.interleave_y.to_string()}/>
+            onchange={on_dest_interleave_y_change} value={ct_state.transfer.interleave_dest.1.to_string()}/>
             </div>
             <input type="button" name="create_transfer" value={"Create"} />
             </form>
@@ -166,6 +149,15 @@ impl TryFrom<String> for RegionDisplay {
         }
     }
 
+}
+impl From<&Region> for RegionDisplay {
+    fn from(value: &Region) -> Self {
+        match *value {
+            Region::Point((col, row)) => RegionDisplay::try_from((col,row,col,row)).ok().unwrap(),
+            Region::Rect(c1, c2) =>
+                RegionDisplay::try_from((c1.0,c1.1,c2.0,c2.1)).ok().unwrap()
+        }
+    }
 }
 impl From<&RegionDisplay> for Region {
     fn from(value: &RegionDisplay) -> Self {

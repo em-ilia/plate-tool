@@ -6,8 +6,9 @@ use web_sys::{EventTarget, HtmlElement, HtmlDialogElement};
 use yew::prelude::*;
 use yewdux::prelude::*;
 
-use crate::components::states::{MainState, NewTransferState, CurrentTransfer};
+use crate::components::states::{MainState, CurrentTransfer};
 use crate::components::transfer_menu::RegionDisplay;
+use crate::data::transfer_region::Region;
 
 #[derive(PartialEq, Properties)]
 pub struct TreeProps {
@@ -17,7 +18,7 @@ pub struct TreeProps {
 #[function_component]
 pub fn Tree(props: &TreeProps) -> Html {
     let (main_state, main_dispatch) = use_store::<MainState>();
-    let (selection_state, selection_dispatch) = use_store::<NewTransferState>();
+    let (ct_state, ct_dispatch) = use_store::<CurrentTransfer>();
     let plate_modal_id: UseStateHandle<Option<Uuid>> = use_state(|| {None});
 
     let open_plate_info_callback = {
@@ -50,31 +51,39 @@ pub fn Tree(props: &TreeProps) -> Html {
         })
     };
     let source_plate_select_callback = {
-        let dispatch = selection_dispatch.clone();
+        let main_dispatch = main_dispatch.clone();
+        let ct_dispatch = ct_dispatch.clone();
+
         Callback::from(move |e: MouseEvent| {
             let target: Option<EventTarget> = e.target();
             let li = target.and_then(|t| t.dyn_into::<HtmlElement>().ok());
             if let Some(li) = li {
                 if let Ok(id) = u128::from_str_radix(li.id().as_str(), 10) {
-                    dispatch.reduce_mut(|state| {
-                        state.source_region = RegionDisplay::default();
-                        state.source_id = Uuid::from_u128(id);
-                    })
+                    ct_dispatch.reduce_mut(|state| {
+                        state.transfer.source_region = Region::default();
+                    });
+                    main_dispatch.reduce_mut(|state| {
+                        state.selected_source_plate = Uuid::from_u128(id);
+                    });
                 }
             }
         })
     };
     let destination_plate_select_callback = {
-        let dispatch = selection_dispatch.clone();
+        let main_dispatch = main_dispatch.clone();
+        let ct_dispatch = ct_dispatch.clone();
+
         Callback::from(move |e: MouseEvent| {
             let target: Option<EventTarget> = e.target();
             let li = target.and_then(|t| t.dyn_into::<HtmlElement>().ok());
             if let Some(li) = li {
                 if let Ok(id) = u128::from_str_radix(li.id().as_str(), 10) {
-                    dispatch.reduce_mut(|state| {
-                        state.destination_region = RegionDisplay::default();
-                        state.destination_id = Uuid::from_u128(id);
-                    })
+                    ct_dispatch.reduce_mut(|state| {
+                        state.transfer.dest_region = Region::default();
+                    });
+                    main_dispatch.reduce_mut(|state| {
+                        state.selected_dest_plate = Uuid::from_u128(id);
+                    });
                 }
             }
         })
@@ -86,7 +95,7 @@ pub fn Tree(props: &TreeProps) -> Html {
                     ondblclick={open_plate_info_callback.clone()}
                     onclick={source_plate_select_callback.clone()}
                     class={classes!(
-                        Some(if spi.get_uuid() == selection_state.source_id {Some("selected")}
+                        Some(if spi.get_uuid() == main_state.selected_source_plate {Some("selected")}
                              else {None})
                     )}>
                         {String::from(spi)}
@@ -98,7 +107,7 @@ pub fn Tree(props: &TreeProps) -> Html {
                     ondblclick={open_plate_info_callback.clone()}
                     onclick={destination_plate_select_callback.clone()}
                     class={classes!(
-                        Some(if dpi.get_uuid() == selection_state.destination_id {Some("selected")}
+                        Some(if dpi.get_uuid() == main_state.selected_dest_plate {Some("selected")}
                              else {None})
                     )}> {String::from(dpi)} </li> }
         }).collect::<Html>();

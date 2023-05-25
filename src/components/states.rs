@@ -10,17 +10,6 @@ use crate::data::transfer_region::TransferRegion;
 
 #[derive(Debug, Default, Clone, PartialEq, Serialize, Deserialize, Store)]
 #[store(storage = "session")]
-pub struct NewTransferState {
-    pub source_id: Uuid,
-    pub destination_id: Uuid,
-    pub source_region: RegionDisplay,
-    pub destination_region: RegionDisplay,
-    pub interleave_x: i8,
-    pub interleave_y: i8,
-}
-
-#[derive(Debug, Default, Clone, PartialEq, Serialize, Deserialize, Store)]
-#[store(storage = "session")]
 pub struct CurrentTransfer {
     pub transfer: TransferRegion,
 }
@@ -30,6 +19,9 @@ pub struct MainState {
     pub source_plates: Vec<PlateInstance>,
     pub destination_plates: Vec<PlateInstance>,
     pub transfers: Vec<Transfer>,
+    pub selected_source_plate: Uuid,
+    pub selected_dest_plate: Uuid,
+    pub selected_transfer: Uuid,
 }
 
 impl Store for MainState {

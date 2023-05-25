@@ -6,7 +6,7 @@ use std::rc::Rc;
 
 use crate::data::plate_instances::PlateInstance;
 use crate::data::transfer_region::{TransferRegion, Region};
-use crate::components::states::{NewTransferState, CurrentTransfer};
+use crate::components::states::{CurrentTransfer};
 
 use super::super::transfer_menu::RegionDisplay;
 
@@ -18,7 +18,6 @@ pub struct SourcePlateProps {
 
 #[function_component]
 pub fn SourcePlate(props: &SourcePlateProps) -> Html {
-    let (state, dispatch) = use_store::<NewTransferState>();
     let (ct_state, ct_dispatch) = use_store::<CurrentTransfer>();
     let m_start_handle: UseStateHandle<Option<(u8,u8)>> = use_state_eq(|| None);
     let m_end_handle: UseStateHandle<Option<(u8,u8)>> = use_state_eq(|| None);
@@ -27,8 +26,10 @@ pub fn SourcePlate(props: &SourcePlateProps) -> Html {
     let m_end = m_end_handle.clone();
 
     if !(*m_stat_handle) {
-        let pt1 = (state.source_region.col_start, state.source_region.row_start);
-        let pt2 = (state.source_region.col_end, state.source_region.row_end);
+        let (pt1, pt2) = match ct_state.transfer.source_region {
+            Region::Point((x,y)) => ((x,y),(x,y)),
+            Region::Rect(c1, c2) => (c1, c2),
+        };
         m_start_handle.set(Some(pt1));
         m_end_handle.set(Some(pt2));
     }
@@ -68,9 +69,6 @@ pub fn SourcePlate(props: &SourcePlateProps) -> Html {
                 if let Ok(rd) = RegionDisplay::try_from((ul.0, ul.1, br.0, br.1)) {
                     ct_dispatch.reduce_mut(|state| {
                         state.transfer.source_region = Region::from(&rd);
-                    });
-                    dispatch.reduce_mut(|state| {
-                        state.source_region = rd;
                     });
                 }
             }
