@@ -75,11 +75,9 @@ pub fn TransferMenu() -> Html {
                     dispatch.reduce_mut(|state| {
                         state.interleave_x = num;
                     });
-                    if let Some((_,y)) = ct_state.transfer.interleave_dest {
-                        ct_dispatch.reduce_mut(|state| {
-                            state.transfer.interleave_dest = Some((num, y));
-                        });
-                    }
+                    ct_dispatch.reduce_mut(|state| {
+                        state.transfer.interleave_dest = (num, state.transfer.interleave_dest.1);
+                    });
                 }
             }
         })
@@ -97,11 +95,9 @@ pub fn TransferMenu() -> Html {
                     dispatch.reduce_mut(|state| {
                         state.interleave_y = num;
                     });
-                    if let Some((x,_)) = ct_state.transfer.interleave_dest {
-                        ct_dispatch.reduce_mut(|state| {
-                            state.transfer.interleave_dest = Some((x, num));
-                        });
-                    }
+                    ct_dispatch.reduce_mut(|state| {
+                        state.transfer.interleave_dest = (state.transfer.interleave_dest.0, num);
+                    });
                 }
             }
         })
