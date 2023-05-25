@@ -157,20 +157,23 @@ impl TransferRegion {
                             d_br.1.checked_sub(d_ul.1).unwrap() + 1,
                         );
                         let N_s = ( // Number of used source wells
-                            s_dims.0.div_euclid(il_source.0.abs() as u8),
-                            s_dims.1.div_euclid(il_source.1.abs() as u8),
+                            (s_dims.0 + il_source.0.abs() as u8 - 1).div_euclid(il_source.0.abs() as u8),
+                            (s_dims.1 + il_source.1.abs() as u8 - 1).div_euclid(il_source.1.abs() as u8),
                         );
                         let D_per_replicate = ( // How many wells are used per replicate?
-                            (s_dims.0 * (il_dest.0.abs() as u8))
+                            (N_s.0 * (il_dest.0.abs() as u8))
                             // Conditionally subtract one to ignore the trailing interleave well
                             .saturating_sub(if il_dest.0.abs() > 1 {1} else {0}),
-                            (s_dims.1 * (il_dest.1.abs() as u8))
+                            (N_s.1 * (il_dest.1.abs() as u8))
                             .saturating_sub(if il_dest.1.abs() > 1 {1} else {0}),
                         );
                         let count = ( // How many times can we replicate?
                             d_dims.0.div_euclid(D_per_replicate.0),
                             d_dims.1.div_euclid(D_per_replicate.1),
                         );
+                        let i = i.saturating_sub(s_ul.0).saturating_div(il_source.0.abs() as u8);
+                        let j = j.saturating_sub(s_ul.1).saturating_div(il_source.1.abs() as u8);
+                        log::debug!("s_dims: {:?}, N_s: {:?}", s_dims, N_s);
 
                         Some(
                             possible_destination_wells
@@ -178,13 +181,13 @@ impl TransferRegion {
                                 .filter(|(x, _)| {
                                     x.checked_sub(d_ul.0).unwrap()
                                         % (N_s.0 * il_dest.0.abs() as u8) // Counter along x
-                                    == ((il_dest.0.abs() as u8 *(i).checked_sub(1u8).unwrap()))
+                                    == ((il_dest.0.abs() as u8 *i))
                                         % (N_s.0 * il_dest.0.abs() as u8)
                                 })
                                 .filter(|(_, y)| {
                                     y.checked_sub(d_ul.1).unwrap()
                                         % (N_s.1 * il_dest.1.abs() as u8) // Counter along u
-                                    == ((il_dest.1.abs() as u8 *(j).checked_sub(1u8).unwrap()))
+                                    == ((il_dest.1.abs() as u8 *j))
                                         % (N_s.1 * il_dest.1.abs() as u8)
                                 })
                                 .filter(|(x,y)| {

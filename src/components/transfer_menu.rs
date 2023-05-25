@@ -53,6 +53,36 @@ pub fn TransferMenu() -> Html {
         })
     };
     
+    let on_source_interleave_x_change = {
+        let ct_dispatch = ct_dispatch.clone();
+
+        Callback::from(move |e: Event| {
+            let target: Option<EventTarget> = e.target();
+            let input = target.and_then(|t| t.dyn_into::<HtmlInputElement>().ok());
+            if let Some(input) = input {
+                if let Ok(num) = input.value().parse::<i8>() {
+                    ct_dispatch.reduce_mut(|state| {
+                        state.transfer.interleave_source = (num, state.transfer.interleave_source.1);
+                    });
+                }
+            }
+        })
+    };
+    let on_source_interleave_y_change = {
+        let ct_dispatch = ct_dispatch.clone();
+
+        Callback::from(move |e: Event| {
+            let target: Option<EventTarget> = e.target();
+            let input = target.and_then(|t| t.dyn_into::<HtmlInputElement>().ok());
+            if let Some(input) = input {
+                if let Ok(num) = input.value().parse::<i8>() {
+                    ct_dispatch.reduce_mut(|state| {
+                        state.transfer.interleave_source = (state.transfer.interleave_source.0, num);
+                    });
+                }
+            }
+        })
+    };
     let on_dest_interleave_x_change = {
         let ct_dispatch = ct_dispatch.clone();
 
@@ -100,11 +130,22 @@ pub fn TransferMenu() -> Html {
                 value={RegionDisplay::from(&ct_state.transfer.dest_region).text}/>
             </div>
             <div>
+            {"Source Interleave "}
+            <label for="source_interleave_x">{"Row:"}</label>
+            <input type="number" name="source_interleave_x"
+            onchange={on_source_interleave_x_change}
+            value={ct_state.transfer.interleave_source.0.to_string()}/>
+            <label for="source_interleave_y">{"Col:"}</label>
+            <input type="number" name="source_interleave_y"
+            onchange={on_source_interleave_y_change}
+            value={ct_state.transfer.interleave_source.1.to_string()}/>
+            </div>
+            <div>
             {"Destination Interleave "}
-            <label for="dest_interleave_x">{"X:"}</label>
+            <label for="dest_interleave_x">{"Row:"}</label>
             <input type="number" name="dest_interleave_x"
             onchange={on_dest_interleave_x_change} value={ct_state.transfer.interleave_dest.0.to_string()}/>
-            <label for="dest_interleave_y">{"Y:"}</label>
+            <label for="dest_interleave_y">{"Col:"}</label>
             <input type="number" name="dest_interleave_y"
             onchange={on_dest_interleave_y_change} value={ct_state.transfer.interleave_dest.1.to_string()}/>
             </div>
