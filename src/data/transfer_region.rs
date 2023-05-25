@@ -80,14 +80,14 @@ impl TransferRegion {
 
         let mut wells = Vec::<(u8, u8)>::new();
 
-        log::debug!("GDW:");
+        // log::debug!("GDW:");
         for well in source_wells {
             if let Some(mut dest_wells) = map(well) {
-                log::debug!("Map {:?} to {:?}", well, dest_wells);
+                // log::debug!("Map {:?} to {:?}", well, dest_wells);
                 wells.append(&mut dest_wells);
             }
         }
-        log::debug!("GDW END.");
+        // log::debug!("GDW END.");
 
         return wells;
     }
@@ -95,14 +95,14 @@ impl TransferRegion {
     pub fn calculate_map(&self) -> Box<dyn Fn((u8, u8)) -> Option<Vec<(u8, u8)>> + '_> {
         // By validating first, we have a stronger guarantee that
         // this function will not panic. :)
-        log::debug!("Validating: {:?}", self.validate());
+        // log::debug!("Validating: {:?}", self.validate());
         if let Err(msg) = self.validate() {
             eprintln!("{}", msg);
             eprintln!("This transfer will be empty.");
             return Box::new(|(_, _)| None);
         }
 
-        log::debug!("What is ild? {:?}", self);
+        // log::debug!("What is ild? {:?}", self);
         let source_wells = self.get_source_wells();
         let il_dest = self.interleave_dest;
         let il_source = self.interleave_source;
@@ -161,19 +161,20 @@ impl TransferRegion {
                             (s_dims.1 + il_source.1.abs() as u8 - 1).div_euclid(il_source.1.abs() as u8),
                         );
                         let D_per_replicate = ( // How many wells are used per replicate?
-                            (N_s.0 * (il_dest.0.abs() as u8))
-                            // Conditionally subtract one to ignore the trailing interleave well
-                            .saturating_sub(if il_dest.0.abs() > 1 {1} else {0}),
+                            (N_s.0 * (il_dest.0.abs() as u8)),
                             (N_s.1 * (il_dest.1.abs() as u8))
-                            .saturating_sub(if il_dest.1.abs() > 1 {1} else {0}),
                         );
                         let count = ( // How many times can we replicate?
-                            d_dims.0.div_euclid(D_per_replicate.0),
-                            d_dims.1.div_euclid(D_per_replicate.1),
+                           (1..).position(
+                               |n| n*N_s.0*il_dest.0.abs() as u8 - il_dest.0.abs() as u8 + 1
+                                   > d_dims.0).unwrap() as u8,
+                           (1..).position(
+                               |n| n*N_s.1*il_dest.1.abs() as u8 - il_dest.1.abs() as u8 + 1
+                                   > d_dims.1).unwrap() as u8,
                         );
                         let i = i.saturating_sub(s_ul.0).saturating_div(il_source.0.abs() as u8);
                         let j = j.saturating_sub(s_ul.1).saturating_div(il_source.1.abs() as u8);
-                        log::debug!("s_dims: {:?}, N_s: {:?}", s_dims, N_s);
+                        // log::debug!("N_s: {:?}, d_dims: {:?}, D_per: {:?}, count: {:?}", N_s, d_dims, D_per_replicate, count);
 
                         Some(
                             possible_destination_wells
@@ -234,7 +235,7 @@ impl TransferRegion {
                     return Err("Source region is out-of-bounds! (Too tall)");
                 }
                 if s1.1 > source_max.1 || s2.1 > source_max.1 {
-                    log::debug!("s1.1: {}, max.1: {}", s1.1, source_max.1);
+                    // log::debug!("s1.1: {}, max.1: {}", s1.1, source_max.1);
                     return Err("Source region is out-of-bounds! (Too wide)");
                 }
                 // Check that source lengths divide destination lengths
