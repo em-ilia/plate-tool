@@ -256,9 +256,12 @@ fn num_to_letters(num: u8) -> Option<String> {
 
 #[cfg(test)]
 mod tests {
+    use wasm_bindgen_test::*;
+
     use super::{letters_to_num, num_to_letters, RegionDisplay};
 
     #[test]
+    #[wasm_bindgen_test]
     fn test_letters_to_num() {
         assert_eq!(letters_to_num("D"), Some(4));
         assert_eq!(letters_to_num("d"), None);
@@ -267,6 +270,7 @@ mod tests {
     }
 
     #[test]
+    #[wasm_bindgen_test]
     fn test_num_to_letters() {
         println!("27 is {:?}", num_to_letters(27));
         assert_eq!(num_to_letters(1), Some("A".to_string()));
@@ -276,6 +280,7 @@ mod tests {
     }
 
     #[test]
+    #[wasm_bindgen_test]
     fn test_l2n_and_n2l() {
         assert_eq!(num_to_letters(letters_to_num("A").unwrap()), Some("A".to_string()));
         assert_eq!(num_to_letters(letters_to_num("BJ").unwrap()), Some("BJ".to_string()));
@@ -285,6 +290,7 @@ mod tests {
     }
 
     #[test]
+    #[wasm_bindgen_test]
     fn test_try_from_string_for_regiondisplay() {
         let desired = RegionDisplay {
             text: "A1:E5".to_string(),

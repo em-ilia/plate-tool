@@ -87,10 +87,3 @@ impl PlateFormat {
         }
     }
 }
-
-/*
-#[cfg(test)]
-mod tests {
-    use super::{Plate, PlateFormat, PlateType};
-}
-*/

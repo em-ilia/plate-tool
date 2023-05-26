@@ -164,10 +164,13 @@ pub fn in_rect(corner1: Option<(u8, u8)>, corner2: Option<(u8, u8)>, pt: (u8, u8
 
 #[cfg(test)]
 mod tests {
+    use wasm_bindgen_test::*;
+
     use super::in_rect;
 
     // in_rect tests
     #[test]
+    #[wasm_bindgen_test]
     fn test_in_rect1() {
         // Test in center of rect
         let c1 = (1, 1);
@@ -179,6 +182,7 @@ mod tests {
     }
 
     #[test]
+    #[wasm_bindgen_test]
     fn test_in_rect2() {
         // Test on top/bottom edges of rect
         let c1 = (1, 1);
@@ -193,6 +197,7 @@ mod tests {
     }
 
     #[test]
+    #[wasm_bindgen_test]
     fn test_in_rect3() {
         // Test on left/right edges of rect
         let c1 = (1, 1);
@@ -207,6 +212,7 @@ mod tests {
     }
 
     #[test]
+    #[wasm_bindgen_test]
     fn test_in_rect4() {
         // Test cases that should fail
         let c1 = (1, 1);

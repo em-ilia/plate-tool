@@ -368,10 +368,13 @@ impl fmt::Display for TransferRegion {
 
 #[cfg(test)]
 mod tests {
+    use wasm_bindgen_test::*;
+
     use crate::data::plate::*;
     use crate::data::transfer_region::*;
 
     #[test]
+    #[wasm_bindgen_test]
     fn test_simple_transfer() {
         let source = Plate::new(PlateType::Source, PlateFormat::W96);
         let destination = Plate::new(PlateType::Destination, PlateFormat::W384);
@@ -419,6 +422,7 @@ mod tests {
     }
 
     #[test]
+    #[wasm_bindgen_test]
     fn test_replicate_transfer() {
         let source = Plate::new(PlateType::Source, PlateFormat::W96);
         let destination = Plate::new(PlateType::Destination, PlateFormat::W384);
@@ -437,6 +441,7 @@ mod tests {
     }
 
     #[test]
+    #[wasm_bindgen_test]
     fn test_pooling_transfer() {
     }
 }
