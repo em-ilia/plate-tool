@@ -57,7 +57,7 @@ impl MainState {
                     dpi.get_uuid() == tr.dest_id
                 })
             })
-            .map(|&tr| tr)
+            .map(|tr| tr.clone())
             .collect();
     }
 

@@ -111,6 +111,14 @@ pub fn Tree(props: &TreeProps) -> Html {
                              else {None})
                     )}> {String::from(dpi)} </li> }
         }).collect::<Html>();
+    let transfers = main_state.transfers.iter()
+        .map(|transfer| {
+            html!{ <li id={transfer.get_uuid().as_u128().to_string()}>
+                {transfer.name.clone()}
+                </li>
+            }
+        })
+        .collect::<Html>();
 
 
     html! {
@@ -130,6 +138,7 @@ pub fn Tree(props: &TreeProps) -> Html {
             <div id="transfers">
             <h3>{"Transfers:"}</h3>
             <ul>
+                {transfers}
             </ul>
             </div>
             if let Some(id) = *plate_modal_id {

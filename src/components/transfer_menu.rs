@@ -8,12 +8,13 @@ use web_sys::{EventTarget, HtmlInputElement};
 use regex::Regex;
 use lazy_static::lazy_static;
 
-use crate::data::transfer_region::Region;
+use crate::data::{transfer_region::Region, transfer::Transfer};
 
-use super::states::{CurrentTransfer};
+use super::states::{MainState, CurrentTransfer};
 
 #[function_component]
 pub fn TransferMenu() -> Html {
+    let (main_state, main_dispatch) = use_store::<MainState>();
     let (ct_state, ct_dispatch) = use_store::<CurrentTransfer>();
 
     let on_src_region_change = {
@@ -113,6 +114,35 @@ pub fn TransferMenu() -> Html {
             }
         })
     };
+    let create_transfer_button_callback = {
+        let main_dispatch = main_dispatch.clone();
+        let main_state = main_state.clone();
+        let ct_state = ct_state.clone();
+
+        Callback::from(move |e: MouseEvent| {
+        log::debug!("Button pressed");
+            if main_state.selected_transfer.is_nil() {
+                log::debug!("Was nil");
+                if let Some(spi) = main_state.source_plates.iter()
+                    .find(|spi| spi.get_uuid() == main_state.selected_source_plate) {
+                    if let Some(dpi) = main_state.destination_plates.iter()
+                        .find(|dpi| dpi.get_uuid() == main_state.selected_dest_plate) {
+                            let new_transfer = Transfer::new(
+                                spi.clone(),
+                                dpi.clone(),
+                                ct_state.transfer.clone(),
+                                "Reginald".to_string());
+                            main_dispatch.reduce_mut(|state| {
+                                state.transfers.push(new_transfer)
+                            });
+                        }
+                }
+                //let new_transfer = Transfer::new();
+                main_dispatch.reduce_mut(|state| {
+                });
+            }
+        })
+    };
 
     html! {
         <div class="transfer_menu">
@@ -149,9 +179,9 @@ pub fn TransferMenu() -> Html {
             <input type="number" name="dest_interleave_y"
             onchange={on_dest_interleave_y_change} value={ct_state.transfer.interleave_dest.1.to_string()}/>
             </div>
-            <input type="button" name="create_transfer" value={"Create"} />
+            <input type="button" name="create_transfer" onclick={create_transfer_button_callback}
+            value={"Create"} />
             </form>
-            <button>{"Refresh"}</button>
         </div>
     }
 }
