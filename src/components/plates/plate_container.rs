@@ -3,8 +3,8 @@ use yew::prelude::*;
 
 use crate::data::plate_instances::PlateInstance;
 
-use super::source_plate::SourcePlate;
 use super::destination_plate::DestinationPlate;
+use super::source_plate::SourcePlate;
 
 #[derive(Properties, PartialEq)]
 pub struct PlateContainerProps {

@@ -1,21 +1,37 @@
 #![allow(non_snake_case)]
 
-use serde::{Serialize, Deserialize};
-use yew::prelude::*;
-use yewdux::prelude::*;
+use lazy_static::lazy_static;
+use regex::Regex;
+use serde::{Deserialize, Serialize};
 use wasm_bindgen::JsCast;
 use web_sys::{EventTarget, HtmlInputElement};
-use regex::Regex;
-use lazy_static::lazy_static;
+use uuid::Uuid;
+use yew::prelude::*;
+use yewdux::prelude::*;
 
-use crate::data::{transfer_region::Region, transfer::Transfer};
+use crate::data::{transfer::Transfer, transfer_region::Region};
 
-use super::states::{MainState, CurrentTransfer};
+use super::states::{CurrentTransfer, MainState};
 
 #[function_component]
 pub fn TransferMenu() -> Html {
     let (main_state, main_dispatch) = use_store::<MainState>();
     let (ct_state, ct_dispatch) = use_store::<CurrentTransfer>();
+
+    let on_name_change = {
+        let ct_dispatch = ct_dispatch.clone();
+
+        Callback::from(move |e: Event| {
+            let target: Option<EventTarget> = e.target();
+            let input = target.and_then(|t| t.dyn_into::<HtmlInputElement>().ok());
+            if let Some(input) = input {
+                ct_dispatch.reduce_mut(|state| {
+                    state.transfer.name = input.value().clone();
+                });
+                }
+            }
+
+    )};
 
     let on_src_region_change = {
         let ct_dispatch = ct_dispatch.clone();
@@ -26,7 +42,7 @@ pub fn TransferMenu() -> Html {
             if let Some(input) = input {
                 if let Ok(rd) = RegionDisplay::try_from(input.value()) {
                     ct_dispatch.reduce_mut(|state| {
-                        state.transfer.source_region = Region::from(&rd);
+                        state.transfer.transfer_region.source_region = Region::from(&rd);
                     });
                     input.set_custom_validity("");
                 } else {
@@ -44,7 +60,7 @@ pub fn TransferMenu() -> Html {
             if let Some(input) = input {
                 if let Ok(rd) = RegionDisplay::try_from(input.value()) {
                     ct_dispatch.reduce_mut(|state| {
-                        state.transfer.dest_region = Region::from(&rd);
+                        state.transfer.transfer_region.dest_region = Region::from(&rd);
                     });
                     input.set_custom_validity("");
                 } else {
@@ -53,7 +69,7 @@ pub fn TransferMenu() -> Html {
             }
         })
     };
-    
+
     let on_source_interleave_x_change = {
         let ct_dispatch = ct_dispatch.clone();
 
@@ -63,7 +79,8 @@ pub fn TransferMenu() -> Html {
             if let Some(input) = input {
                 if let Ok(num) = input.value().parse::<i8>() {
                     ct_dispatch.reduce_mut(|state| {
-                        state.transfer.interleave_source = (num, state.transfer.interleave_source.1);
+                        state.transfer.transfer_region.interleave_source =
+                            (num, state.transfer.transfer_region.interleave_source.1);
                     });
                 }
             }
@@ -78,7 +95,8 @@ pub fn TransferMenu() -> Html {
             if let Some(input) = input {
                 if let Ok(num) = input.value().parse::<i8>() {
                     ct_dispatch.reduce_mut(|state| {
-                        state.transfer.interleave_source = (state.transfer.interleave_source.0, num);
+                        state.transfer.transfer_region.interleave_source =
+                            (state.transfer.transfer_region.interleave_source.0, num);
                     });
                 }
             }
@@ -93,7 +111,8 @@ pub fn TransferMenu() -> Html {
             if let Some(input) = input {
                 if let Ok(num) = input.value().parse::<i8>() {
                     ct_dispatch.reduce_mut(|state| {
-                        state.transfer.interleave_dest = (num, state.transfer.interleave_dest.1);
+                        state.transfer.transfer_region.interleave_dest =
+                            (num, state.transfer.transfer_region.interleave_dest.1);
                     });
                 }
             }
@@ -108,38 +127,87 @@ pub fn TransferMenu() -> Html {
             if let Some(input) = input {
                 if let Ok(num) = input.value().parse::<i8>() {
                     ct_dispatch.reduce_mut(|state| {
-                        state.transfer.interleave_dest = (state.transfer.interleave_dest.0, num);
+                        state.transfer.transfer_region.interleave_dest =
+                            (state.transfer.transfer_region.interleave_dest.0, num);
                     });
                 }
             }
         })
     };
-    let create_transfer_button_callback = {
+
+    let new_transfer_button_callback = {
+        let main_dispatch = main_dispatch.clone();
+        let main_state = main_state.clone();
+        let ct_dispatch = ct_dispatch.clone();
+
+        Callback::from(move |_: MouseEvent| {
+            main_dispatch.reduce_mut(|state| {
+                state.selected_transfer = Uuid::nil();
+            });
+            ct_dispatch.reduce_mut(|state| {
+                state.transfer = Transfer::default();
+                state.transfer.source_id = main_state.selected_source_plate;
+                state.transfer.dest_id = main_state.selected_dest_plate;
+            });
+        })
+    };
+
+    let save_transfer_button_callback = {
         let main_dispatch = main_dispatch.clone();
         let main_state = main_state.clone();
         let ct_state = ct_state.clone();
 
-        Callback::from(move |e: MouseEvent| {
-        log::debug!("Button pressed");
+        Callback::from(move |_: MouseEvent| {
+            log::debug!("Button pressed");
             if main_state.selected_transfer.is_nil() {
-                log::debug!("Was nil");
-                if let Some(spi) = main_state.source_plates.iter()
-                    .find(|spi| spi.get_uuid() == main_state.selected_source_plate) {
-                    if let Some(dpi) = main_state.destination_plates.iter()
-                        .find(|dpi| dpi.get_uuid() == main_state.selected_dest_plate) {
-                            let new_transfer = Transfer::new(
-                                spi.clone(),
-                                dpi.clone(),
-                                ct_state.transfer.clone(),
-                                "Reginald".to_string());
-                            main_dispatch.reduce_mut(|state| {
-                                state.transfers.push(new_transfer)
-                            });
-                        }
+                if let Some(spi) = main_state
+                    .source_plates
+                    .iter()
+                    .find(|spi| spi.get_uuid() == main_state.selected_source_plate)
+                {
+                    if let Some(dpi) = main_state
+                        .destination_plates
+                        .iter()
+                        .find(|dpi| dpi.get_uuid() == main_state.selected_dest_plate)
+                    {
+                        let new_transfer = Transfer::new(
+                            spi.clone(),
+                            dpi.clone(),
+                            ct_state.transfer.transfer_region,
+                            ct_state.transfer.name.clone()
+                        );
+                        main_dispatch.reduce_mut(|state| state.transfers.push(new_transfer));
+                    }
                 }
-                //let new_transfer = Transfer::new();
-                main_dispatch.reduce_mut(|state| {
-                });
+            } else {
+                if let Some(index) = main_state.transfers.iter()
+                                        .position(|t| t.get_uuid() == main_state.selected_transfer) {
+                    main_dispatch.reduce_mut(|state| {
+                        state.transfers[index] = ct_state.transfer.clone();
+                    });
+                }
+            }
+        })
+    };
+
+    let delete_transfer_button_callback = {
+        let main_dispatch = main_dispatch.clone();
+        let main_state = main_state.clone();
+        let ct_state = ct_state.clone();
+        let new_callback = new_transfer_button_callback.clone();
+
+        Callback::from(move |e: MouseEvent| {
+            if main_state.selected_transfer.is_nil() {
+                () // Maybe reset transfer?
+            } else {
+                if let Some(index) = main_state.transfers.iter()
+                                     .position(|t| t.get_uuid() == ct_state.transfer.get_uuid()) {
+                    main_dispatch.reduce_mut(|state| {
+                        state.transfers.remove(index);
+                        state.selected_transfer = Uuid::nil();
+                    });
+                    new_callback.emit(e); // We need a new transfer now
+                }
             }
         })
     };
@@ -148,39 +216,51 @@ pub fn TransferMenu() -> Html {
         <div class="transfer_menu">
             <form>
             <div>
+                <label for="name">{"Name:"}</label>
+                <input type="text" name="name"
+                onchange={on_name_change}
+                value={ct_state.transfer.name.clone()}/>
+            </div>
+            <div>
                 <label for="src_region">{"Source Region:"}</label>
                 <input type="text" name="src_region"
                 onchange={on_src_region_change}
-                value={RegionDisplay::from(&ct_state.transfer.source_region).text}/>
+                value={RegionDisplay::from(&ct_state.transfer.transfer_region.source_region).text}/>
             </div>
             <div>
                 <label for="dest_region">{"Destination Region:"}</label>
                 <input type="text" name="dest_region"
                 onchange={on_dest_region_change}
-                value={RegionDisplay::from(&ct_state.transfer.dest_region).text}/>
+                value={RegionDisplay::from(&ct_state.transfer.transfer_region.dest_region).text}/>
             </div>
             <div>
             {"Source Interleave "}
             <label for="source_interleave_x">{"Row:"}</label>
             <input type="number" name="source_interleave_x"
             onchange={on_source_interleave_x_change}
-            value={ct_state.transfer.interleave_source.0.to_string()}/>
+            value={ct_state.transfer.transfer_region.interleave_source.0.to_string()}/>
             <label for="source_interleave_y">{"Col:"}</label>
             <input type="number" name="source_interleave_y"
             onchange={on_source_interleave_y_change}
-            value={ct_state.transfer.interleave_source.1.to_string()}/>
+            value={ct_state.transfer.transfer_region.interleave_source.1.to_string()}/>
             </div>
             <div>
             {"Destination Interleave "}
             <label for="dest_interleave_x">{"Row:"}</label>
             <input type="number" name="dest_interleave_x"
-            onchange={on_dest_interleave_x_change} value={ct_state.transfer.interleave_dest.0.to_string()}/>
+            onchange={on_dest_interleave_x_change}
+            value={ct_state.transfer.transfer_region.interleave_dest.0.to_string()}/>
             <label for="dest_interleave_y">{"Col:"}</label>
             <input type="number" name="dest_interleave_y"
-            onchange={on_dest_interleave_y_change} value={ct_state.transfer.interleave_dest.1.to_string()}/>
+            onchange={on_dest_interleave_y_change}
+            value={ct_state.transfer.transfer_region.interleave_dest.1.to_string()}/>
             </div>
-            <input type="button" name="create_transfer" onclick={create_transfer_button_callback}
-            value={"Create"} />
+            <input type="button" name="new_transfer" onclick={new_transfer_button_callback}
+            value={"New"} />
+            <input type="button" name="save_transfer" onclick={save_transfer_button_callback}
+            value={"Save"} />
+            <input type="button" name="delete_transfer" onclick={delete_transfer_button_callback}
+            value={"Delete"} />
             </form>
         </div>
     }
@@ -203,30 +283,38 @@ impl TryFrom<String> for RegionDisplay {
             static ref REGION_REGEX: Regex = Regex::new(r"([A-Z]+)(\d+):([A-Z]+)(\d+)").unwrap();
         }
         if let Some(captures) = REGION_REGEX.captures(&value) {
-            if captures.len() != 5 { return Err("Not enough capture groups") }
+            if captures.len() != 5 {
+                return Err("Not enough capture groups");
+            }
             let col_start = letters_to_num(&captures[1]).ok_or("Column start failed to parse")?;
             let col_end = letters_to_num(&captures[3]).ok_or("Column end failed to parse")?;
-            let row_start: u8 = captures[2].parse::<u8>().or(Err("Row start failed to parse"))?;
-            let row_end: u8 = captures[4].parse::<u8>().or(Err("Row end failed to parse"))?;
-            return Ok(RegionDisplay { 
+            let row_start: u8 = captures[2]
+                .parse::<u8>()
+                .or(Err("Row start failed to parse"))?;
+            let row_end: u8 = captures[4]
+                .parse::<u8>()
+                .or(Err("Row end failed to parse"))?;
+            return Ok(RegionDisplay {
                 text: value,
                 col_start,
                 row_start,
                 col_end,
                 row_end,
-                })
+            });
         } else {
-            return Err("Regex match failed")
+            return Err("Regex match failed");
         }
     }
-
 }
 impl From<&Region> for RegionDisplay {
     fn from(value: &Region) -> Self {
         match *value {
-            Region::Point((col, row)) => RegionDisplay::try_from((col,row,col,row)).ok().unwrap(),
-            Region::Rect(c1, c2) =>
-                RegionDisplay::try_from((c1.0,c1.1,c2.0,c2.1)).ok().unwrap()
+            Region::Point((col, row)) => {
+                RegionDisplay::try_from((col, row, col, row)).ok().unwrap()
+            }
+            Region::Rect(c1, c2) => RegionDisplay::try_from((c1.0, c1.1, c2.0, c2.1))
+                .ok()
+                .unwrap(),
         }
     }
 }
@@ -235,14 +323,17 @@ impl From<&RegionDisplay> for Region {
         if value.col_start == value.col_end && value.row_start == value.row_end {
             Region::Point((value.col_start, value.row_start))
         } else {
-            Region::Rect((value.col_start, value.row_start), (value.col_end, value.row_end))
+            Region::Rect(
+                (value.col_start, value.row_start),
+                (value.col_end, value.row_end),
+            )
         }
     }
 }
-impl TryFrom<(u8,u8,u8,u8)> for RegionDisplay {
-    type Error =  &'static str;
+impl TryFrom<(u8, u8, u8, u8)> for RegionDisplay {
+    type Error = &'static str;
 
-    fn try_from(value: (u8,u8,u8,u8)) -> Result<Self, Self::Error> {
+    fn try_from(value: (u8, u8, u8, u8)) -> Result<Self, Self::Error> {
         // (Column Start, Row Start, Column End, Row End)
         // This can only possibly fail if one of the coordinates is zero...
         let cs = num_to_letters(value.0).ok_or("Column start failed to parse")?;
@@ -260,15 +351,19 @@ fn letters_to_num(letters: &str) -> Option<u8> {
     let mut num: u8 = 0;
     for (i, letter) in letters.chars().rev().enumerate() {
         let n = letter as u8;
-        if n < 65 || n > 90 { return None }
-        num = num.checked_add((26_i32.pow(i as u32)*(n as i32 - 64)).try_into().ok()?)?;
+        if n < 65 || n > 90 {
+            return None;
+        }
+        num = num.checked_add((26_i32.pow(i as u32) * (n as i32 - 64)).try_into().ok()?)?;
     }
-    return Some(num)
+    return Some(num);
 }
 fn num_to_letters(num: u8) -> Option<String> {
-    if num == 0 { return None } // Otherwise, we will not return none!
-    // As another note, we can't represent higher than "IV" anyway;
-    // thus there's no reason for a loop (26^n with n>1 will NOT occur).
+    if num == 0 {
+        return None;
+    } // Otherwise, we will not return none!
+      // As another note, we can't represent higher than "IV" anyway;
+      // thus there's no reason for a loop (26^n with n>1 will NOT occur).
     let mut text = "".to_string();
     let mut digit1 = num.div_euclid(26u8);
     let mut digit2 = num.rem_euclid(26u8);
@@ -277,9 +372,9 @@ fn num_to_letters(num: u8) -> Option<String> {
         digit2 = 26;
     }
     if digit1 != 0 {
-        text.push((64+digit1) as char)
+        text.push((64 + digit1) as char)
     }
-    text.push((64+digit2) as char);
+    text.push((64 + digit2) as char);
 
     return Some(text.to_string());
 }
@@ -295,8 +390,8 @@ mod tests {
     fn test_letters_to_num() {
         assert_eq!(letters_to_num("D"), Some(4));
         assert_eq!(letters_to_num("d"), None);
-        assert_eq!(letters_to_num("AD"), Some(26+4));
-        assert_eq!(letters_to_num("CG"), Some(3*26+7));
+        assert_eq!(letters_to_num("AD"), Some(26 + 4));
+        assert_eq!(letters_to_num("CG"), Some(3 * 26 + 7));
     }
 
     #[test]
@@ -312,8 +407,14 @@ mod tests {
     #[test]
     #[wasm_bindgen_test]
     fn test_l2n_and_n2l() {
-        assert_eq!(num_to_letters(letters_to_num("A").unwrap()), Some("A".to_string()));
-        assert_eq!(num_to_letters(letters_to_num("BJ").unwrap()), Some("BJ".to_string()));
+        assert_eq!(
+            num_to_letters(letters_to_num("A").unwrap()),
+            Some("A".to_string())
+        );
+        assert_eq!(
+            num_to_letters(letters_to_num("BJ").unwrap()),
+            Some("BJ".to_string())
+        );
         for i in 1..=255 {
             assert_eq!(letters_to_num(&num_to_letters(i as u8).unwrap()), Some(i));
         }
@@ -327,7 +428,7 @@ mod tests {
             row_start: 1,
             row_end: 5,
             col_start: 1,
-            col_end: 5
+            col_end: 5,
         };
         assert_eq!(desired, "A1:E5".to_string().try_into().unwrap());
     }

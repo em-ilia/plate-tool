@@ -2,8 +2,8 @@
 mod components;
 mod data;
 
-use yew::prelude::*;
 use components::main_window::MainWindow;
+use yew::prelude::*;
 
 #[cfg(debug_assertions)]
 use data::*;
@@ -24,14 +24,14 @@ pub fn plate_test() {
         source_plate: source,
         source_region: transfer_region::Region::Rect((1, 1), (2, 2)),
         dest_plate: destination,
-        dest_region: transfer_region::Region::Rect((2,2),(11,11)),
-        interleave_source: (1,1),
-        interleave_dest: (3,3),
+        dest_region: transfer_region::Region::Rect((2, 2), (11, 11)),
+        interleave_source: (1, 1),
+        interleave_dest: (3, 3),
     };
     println!("{}", transfer);
     let sws = transfer.get_source_wells();
     let m = transfer.calculate_map();
     for w in sws {
-        println!("{:?} -> {:?}", w,m(w));
+        println!("{:?} -> {:?}", w, m(w));
     }
 }

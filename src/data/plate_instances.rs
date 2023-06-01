@@ -1,6 +1,6 @@
-use uuid::Uuid;
-use serde::{Serialize, Deserialize};
 use super::plate::*;
+use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 #[derive(PartialEq, Clone, Serialize, Deserialize)]
 pub struct PlateInstance {
@@ -12,7 +12,10 @@ pub struct PlateInstance {
 impl PlateInstance {
     pub fn new(sort: PlateType, format: PlateFormat, name: String) -> Self {
         PlateInstance {
-            plate: Plate { plate_type: sort, plate_format: format },
+            plate: Plate {
+                plate_type: sort,
+                plate_format: format,
+            },
             id: Uuid::new_v4(),
             name,
         }
@@ -29,6 +32,10 @@ impl PlateInstance {
 
 impl From<Plate> for PlateInstance {
     fn from(value: Plate) -> Self {
-        PlateInstance { plate: value, id: Uuid::new_v4(), name: "New Plate".to_string() }
+        PlateInstance {
+            plate: value,
+            id: Uuid::new_v4(),
+            name: "New Plate".to_string(),
+        }
     }
 }

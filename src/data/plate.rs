@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(PartialEq, Eq, Default, Clone, Copy, Serialize, Deserialize, Debug)]
 pub struct Plate {
@@ -76,12 +76,12 @@ impl PlateFormat {
         }
         */
         match self {
-            PlateFormat::W6    => (2, 3),
-            PlateFormat::W12   => (3, 4),
-            PlateFormat::W24   => (4, 6),
-            PlateFormat::W48   => (6, 8),
-            PlateFormat::W96   => (8, 12),
-            PlateFormat::W384  => (16, 24),
+            PlateFormat::W6 => (2, 3),
+            PlateFormat::W12 => (3, 4),
+            PlateFormat::W24 => (4, 6),
+            PlateFormat::W48 => (6, 8),
+            PlateFormat::W96 => (8, 12),
+            PlateFormat::W384 => (16, 24),
             PlateFormat::W1536 => (32, 48),
             PlateFormat::W3456 => (48, 72),
         }

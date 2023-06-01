@@ -2,11 +2,11 @@
 
 use uuid::Uuid;
 use wasm_bindgen::JsCast;
-use web_sys::{EventTarget, HtmlElement, HtmlDialogElement};
+use web_sys::{EventTarget, HtmlDialogElement, HtmlElement};
 use yew::prelude::*;
 use yewdux::prelude::*;
 
-use crate::components::states::{MainState, CurrentTransfer};
+use crate::components::states::{CurrentTransfer, MainState};
 use crate::components::transfer_menu::RegionDisplay;
 use crate::data::transfer_region::Region;
 
@@ -19,10 +19,10 @@ pub struct TreeProps {
 pub fn Tree(props: &TreeProps) -> Html {
     let (main_state, main_dispatch) = use_store::<MainState>();
     let (ct_state, ct_dispatch) = use_store::<CurrentTransfer>();
-    let plate_modal_id: UseStateHandle<Option<Uuid>> = use_state(|| {None});
+    let plate_modal_id: UseStateHandle<Option<Uuid>> = use_state(|| None);
 
     let open_plate_info_callback = {
-        let plate_menu_id =plate_modal_id.clone();
+        let plate_menu_id = plate_modal_id.clone();
         Callback::from(move |e: MouseEvent| {
             let target: Option<EventTarget> = e.target();
             let li = target.and_then(|t| t.dyn_into::<HtmlElement>().ok());
@@ -34,7 +34,7 @@ pub fn Tree(props: &TreeProps) -> Html {
         })
     };
     let plate_info_close_callback = {
-        let plate_menu_id =plate_modal_id.clone();
+        let plate_menu_id = plate_modal_id.clone();
         Callback::from(move |_| {
             plate_menu_id.set(None);
         })
@@ -60,10 +60,11 @@ pub fn Tree(props: &TreeProps) -> Html {
             if let Some(li) = li {
                 if let Ok(id) = u128::from_str_radix(li.id().as_str(), 10) {
                     ct_dispatch.reduce_mut(|state| {
-                        state.transfer.source_region = Region::default();
+                        state.transfer.transfer_region.source_region = Region::default();
                     });
                     main_dispatch.reduce_mut(|state| {
                         state.selected_source_plate = Uuid::from_u128(id);
+                        state.selected_transfer = Uuid::nil();
                     });
                 }
             }
@@ -79,47 +80,87 @@ pub fn Tree(props: &TreeProps) -> Html {
             if let Some(li) = li {
                 if let Ok(id) = u128::from_str_radix(li.id().as_str(), 10) {
                     ct_dispatch.reduce_mut(|state| {
-                        state.transfer.dest_region = Region::default();
+                        state.transfer.transfer_region.dest_region = Region::default();
                     });
                     main_dispatch.reduce_mut(|state| {
                         state.selected_dest_plate = Uuid::from_u128(id);
+                        state.selected_transfer = Uuid::nil();
                     });
                 }
             }
         })
     };
 
-    let source_plates = main_state.source_plates.iter()
+    let transfer_select_callback = {
+        let main_state = main_state.clone();
+        let main_dispatch = main_dispatch.clone();
+        let ct_dispatch = ct_dispatch.clone();
+
+        Callback::from(move |e: MouseEvent| {
+            let target: Option<EventTarget> = e.target();
+            let li = target.and_then(|t| t.dyn_into::<HtmlElement>().ok());
+            if let Some(li) = li {
+                if let Ok(id) = u128::from_str_radix(li.id().as_str(), 10) {
+                    let id = Uuid::from_u128(id);
+                    if let Some(transfer) = main_state.transfers
+                                            .iter().find(|transfer| transfer.get_uuid() == id) {
+
+                        main_dispatch.reduce_mut(|state| {
+                            state.selected_source_plate = transfer.source_id;
+                            state.selected_dest_plate = transfer.dest_id;
+                            state.selected_transfer = id;
+                        });
+                        ct_dispatch.reduce_mut(|state| {
+                            state.transfer = transfer.clone();
+                        });
+                    }
+                }
+            }
+        })
+    };
+
+    let source_plates = main_state
+        .source_plates
+        .iter()
         .map(|spi| {
-            html!{ <li id={spi.get_uuid().as_u128().to_string()}
-                    ondblclick={open_plate_info_callback.clone()}
-                    onclick={source_plate_select_callback.clone()}
-                    class={classes!(
-                        Some(if spi.get_uuid() == main_state.selected_source_plate {Some("selected")}
-                             else {None})
-                    )}>
-                        {String::from(spi)}
-                        </li> }
-        }).collect::<Html>();
-    let dest_plates = main_state.destination_plates.iter()
+            html! { <li id={spi.get_uuid().as_u128().to_string()}
+            ondblclick={open_plate_info_callback.clone()}
+            onclick={source_plate_select_callback.clone()}
+            class={classes!(
+                if spi.get_uuid() == main_state.selected_source_plate {Some("selected")}
+                     else {None}
+            )}>
+                {String::from(spi)}
+                </li> }
+        })
+        .collect::<Html>();
+    let dest_plates = main_state
+        .destination_plates
+        .iter()
         .map(|dpi| {
-            html!{ <li id={dpi.get_uuid().as_u128().to_string()}
-                    ondblclick={open_plate_info_callback.clone()}
-                    onclick={destination_plate_select_callback.clone()}
-                    class={classes!(
-                        Some(if dpi.get_uuid() == main_state.selected_dest_plate {Some("selected")}
-                             else {None})
-                    )}> {String::from(dpi)} </li> }
-        }).collect::<Html>();
-    let transfers = main_state.transfers.iter()
+            html! { <li id={dpi.get_uuid().as_u128().to_string()}
+            ondblclick={open_plate_info_callback.clone()}
+            onclick={destination_plate_select_callback.clone()}
+            class={classes!(
+                if dpi.get_uuid() == main_state.selected_dest_plate {Some("selected")}
+                     else {None}
+            )}> {String::from(dpi)} </li> }
+        })
+        .collect::<Html>();
+    let transfers = main_state
+        .transfers
+        .iter()
         .map(|transfer| {
-            html!{ <li id={transfer.get_uuid().as_u128().to_string()}>
+            html! { <li id={transfer.get_uuid().as_u128().to_string()}
+                     onclick={transfer_select_callback.clone()}
+                     class={classes!(
+                         if transfer.get_uuid() == main_state.selected_transfer {Some("selected")}
+                         else {None})}>
                 {transfer.name.clone()}
                 </li>
             }
         })
         .collect::<Html>();
-
 
     html! {
         <div class="tree">
@@ -170,19 +211,23 @@ fn PlateInfoModal(props: &PlateInfoModalProps) -> Html {
     let (state, dispatch) = use_store::<MainState>();
     let dialog_ref = use_node_ref();
 
-    let mut plate = state.source_plates.iter()
-        .find(|spi| {spi.get_uuid() == props.id});
+    let mut plate = state
+        .source_plates
+        .iter()
+        .find(|spi| spi.get_uuid() == props.id);
     if plate == None {
-        plate = state.destination_plates.iter()
-            .find(|dpi| {dpi.get_uuid() == props.id});
+        plate = state
+            .destination_plates
+            .iter()
+            .find(|dpi| dpi.get_uuid() == props.id);
     }
     let plate_name = match plate {
         Some(plate) => plate.name.clone(),
-        None => "Not Found".to_string()
+        None => "Not Found".to_string(),
     };
     let onclose = {
         let dialog_close_callback = props.dialog_close_callback.clone();
-        move |_| {dialog_close_callback.emit(())}
+        move |_| dialog_close_callback.emit(())
     };
 
     let delete_onclick = {
@@ -197,10 +242,16 @@ fn PlateInfoModal(props: &PlateInfoModalProps) -> Html {
     {
         let dialog_ref = dialog_ref.clone();
 
-        use_effect_with_deps(|dialog_ref| {
-            dialog_ref.cast::<HtmlDialogElement>().unwrap().show_modal().ok();
-        },
-        dialog_ref);
+        use_effect_with_deps(
+            |dialog_ref| {
+                dialog_ref
+                    .cast::<HtmlDialogElement>()
+                    .unwrap()
+                    .show_modal()
+                    .ok();
+            },
+            dialog_ref,
+        );
     }
 
     html! {

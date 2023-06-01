@@ -2,11 +2,11 @@
 use yew::prelude::*;
 use yewdux::prelude::*;
 
-use super::states::{MainState, CurrentTransfer};
-use super::plates::plate_container::PlateContainer;
-use super::tree::Tree;
-use super::transfer_menu::TransferMenu;
 use super::new_plate_dialog::NewPlateDialog;
+use super::plates::plate_container::PlateContainer;
+use super::states::{CurrentTransfer, MainState};
+use super::transfer_menu::TransferMenu;
+use super::tree::Tree;
 
 use crate::data::plate_instances::PlateInstance;
 
@@ -15,20 +15,24 @@ pub fn MainWindow() -> Html {
     let (main_state, main_dispatch) = use_store::<MainState>();
     let (ct_state, ct_dispatch) = use_store::<CurrentTransfer>();
 
-    let source_plate_instance: Option<PlateInstance> = main_state.source_plates.iter()
-        .find(|spi| {spi.get_uuid() == main_state.selected_source_plate})
+    let source_plate_instance: Option<PlateInstance> = main_state
+        .source_plates
+        .iter()
+        .find(|spi| spi.get_uuid() == main_state.selected_source_plate)
         .cloned();
     if let Some(spi) = source_plate_instance.clone() {
-    ct_dispatch.reduce_mut(|state| {
-        state.transfer.source_plate = spi.plate;
+        ct_dispatch.reduce_mut(|state| {
+            state.transfer.transfer_region.source_plate = spi.plate;
         });
     }
-    let destination_plate_instance: Option<PlateInstance> = main_state.destination_plates.iter()
-        .find(|dpi| {dpi.get_uuid() == main_state.selected_dest_plate})
+    let destination_plate_instance: Option<PlateInstance> = main_state
+        .destination_plates
+        .iter()
+        .find(|dpi| dpi.get_uuid() == main_state.selected_dest_plate)
         .cloned();
     if let Some(dpi) = destination_plate_instance.clone() {
-    ct_dispatch.reduce_mut(|state| {
-        state.transfer.dest_plate = dpi.plate;
+        ct_dispatch.reduce_mut(|state| {
+            state.transfer.transfer_region.dest_plate = dpi.plate;
         });
     }
 
@@ -46,7 +50,7 @@ pub fn MainWindow() -> Html {
         })
     };
 
-    html!{
+    html! {
         <div class="main_container">
             <Tree open_new_plate_callback={open_new_plate_dialog_callback}/>
             <TransferMenu />

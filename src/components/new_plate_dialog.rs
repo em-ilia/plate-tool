@@ -2,11 +2,11 @@ use yew::prelude::*;
 use yewdux::prelude::*;
 
 use wasm_bindgen::JsCast;
-use web_sys::{EventTarget, HtmlFormElement, FormData, HtmlDialogElement};
+use web_sys::{EventTarget, FormData, HtmlDialogElement, HtmlFormElement};
 
-use crate::data::{plate_instances::PlateInstance, transfer::Transfer};
-use crate::data::plate::*;
 use crate::components::states::MainState;
+use crate::data::plate::*;
+use crate::data::{plate_instances::PlateInstance, transfer::Transfer};
 
 #[derive(PartialEq, Properties)]
 pub struct NewPlateDialogProps {
@@ -41,9 +41,17 @@ pub fn NewPlateDialog(props: &NewPlateDialogProps) -> Html {
                         };
                         dispatch.reduce_mut(|s| {
                             if plate_type == PlateType::Source {
-                                s.add_source_plate(PlateInstance::new(PlateType::Source, format, name))
+                                s.add_source_plate(PlateInstance::new(
+                                    PlateType::Source,
+                                    format,
+                                    name,
+                                ))
                             } else {
-                                s.add_dest_plate(PlateInstance::new(PlateType::Destination, format, name))
+                                s.add_dest_plate(PlateInstance::new(
+                                    PlateType::Destination,
+                                    format,
+                                    name,
+                                ))
                             }
                         });
                     }
@@ -57,10 +65,16 @@ pub fn NewPlateDialog(props: &NewPlateDialogProps) -> Html {
     {
         let dialog_ref = dialog_ref.clone();
 
-        use_effect_with_deps(|dialog_ref| {
-            dialog_ref.cast::<HtmlDialogElement>().unwrap().show_modal().ok();
-        },
-        dialog_ref);
+        use_effect_with_deps(
+            |dialog_ref| {
+                dialog_ref
+                    .cast::<HtmlDialogElement>()
+                    .unwrap()
+                    .show_modal()
+                    .ok();
+            },
+            dialog_ref,
+        );
     }
 
     html! {

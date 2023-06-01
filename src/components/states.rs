@@ -1,17 +1,16 @@
-use serde::{Serialize, Deserialize};
-use yewdux::{prelude::*, storage};
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+use yewdux::{prelude::*, storage};
 
 use super::transfer_menu::RegionDisplay;
+use crate::data::plate::*;
 use crate::data::plate_instances::PlateInstance;
 use crate::data::transfer::Transfer;
-use crate::data::plate::*;
-use crate::data::transfer_region::TransferRegion;
 
 #[derive(Debug, Default, Clone, PartialEq, Serialize, Deserialize, Store)]
 #[store(storage = "session")]
 pub struct CurrentTransfer {
-    pub transfer: TransferRegion,
+    pub transfer: Transfer,
 }
 
 #[derive(Default, PartialEq, Clone, Serialize, Deserialize)]
@@ -48,14 +47,17 @@ impl Store for MainState {
 impl MainState {
     pub fn purge_transfers(&mut self) {
         // Removes any transfers for which the associated plates are gone
-        self.transfers = self.transfers.iter()
+        self.transfers = self
+            .transfers
+            .iter()
             .filter(|tr| {
-                self.source_plates.iter().any(|spi| {
-                    spi.get_uuid() == tr.source_id
-                }) &&
-                self.destination_plates.iter().any(|dpi| {
-                    dpi.get_uuid() == tr.dest_id
-                })
+                self.source_plates
+                    .iter()
+                    .any(|spi| spi.get_uuid() == tr.source_id)
+                    && self
+                        .destination_plates
+                        .iter()
+                        .any(|dpi| dpi.get_uuid() == tr.dest_id)
             })
             .map(|tr| tr.clone())
             .collect();
@@ -70,10 +72,18 @@ impl MainState {
         self.destination_plates.push(plate);
     }
     pub fn del_plate(&mut self, id: Uuid) {
-        if let Some(index) = self.source_plates.iter().position(|spi| {spi.get_uuid() == id}) {
+        if let Some(index) = self
+            .source_plates
+            .iter()
+            .position(|spi| spi.get_uuid() == id)
+        {
             self.source_plates.swap_remove(index);
         }
-        if let Some(index) = self.destination_plates.iter().position(|dpi| {dpi.get_uuid() == id}) {
+        if let Some(index) = self
+            .destination_plates
+            .iter()
+            .position(|dpi| dpi.get_uuid() == id)
+        {
             self.destination_plates.swap_remove(index);
         }
     }

@@ -1,12 +1,12 @@
 #![allow(non_snake_case)]
 
+use std::rc::Rc;
 use yew::prelude::*;
 use yewdux::prelude::*;
-use std::rc::Rc;
 
+use crate::components::states::CurrentTransfer;
 use crate::data::plate_instances::PlateInstance;
-use crate::data::transfer_region::{TransferRegion, Region};
-use crate::components::states::{CurrentTransfer};
+use crate::data::transfer_region::{Region, TransferRegion};
 
 use super::super::transfer_menu::RegionDisplay;
 
@@ -19,39 +19,37 @@ pub struct SourcePlateProps {
 #[function_component]
 pub fn SourcePlate(props: &SourcePlateProps) -> Html {
     let (ct_state, ct_dispatch) = use_store::<CurrentTransfer>();
-    let m_start_handle: UseStateHandle<Option<(u8,u8)>> = use_state_eq(|| None);
-    let m_end_handle: UseStateHandle<Option<(u8,u8)>> = use_state_eq(|| None);
+    let m_start_handle: UseStateHandle<Option<(u8, u8)>> = use_state_eq(|| None);
+    let m_end_handle: UseStateHandle<Option<(u8, u8)>> = use_state_eq(|| None);
     let m_stat_handle: UseStateHandle<bool> = use_state_eq(|| false);
     let m_start = m_start_handle.clone();
     let m_end = m_end_handle.clone();
 
     if !(*m_stat_handle) {
-        let (pt1, pt2) = match ct_state.transfer.source_region {
-            Region::Point((x,y)) => ((x,y),(x,y)),
+        let (pt1, pt2) = match ct_state.transfer.transfer_region.source_region {
+            Region::Point((x, y)) => ((x, y), (x, y)),
             Region::Rect(c1, c2) => (c1, c2),
         };
         m_start_handle.set(Some(pt1));
         m_end_handle.set(Some(pt2));
     }
 
-    let source_wells = ct_state.transfer.get_source_wells();
+    let source_wells = ct_state.transfer.transfer_region.get_source_wells();
 
     let mouse_callback = {
         let m_start_handle = m_start_handle.clone();
         let m_end_handle = m_end_handle.clone();
         let m_stat_handle = m_stat_handle.clone();
 
-        Callback::from(move |(i,j,t)| {
-            match t {
-                MouseEventType::MOUSEDOWN => {
-                    m_start_handle.set(Some((i,j)));
-                    m_end_handle.set(Some((i,j)));
-                    m_stat_handle.set(true);
-                },
-                MouseEventType::MOUSEENTER => {
-                    if *m_stat_handle {
-                        m_end_handle.set(Some((i,j)));
-                    }
+        Callback::from(move |(i, j, t)| match t {
+            MouseEventType::MOUSEDOWN => {
+                m_start_handle.set(Some((i, j)));
+                m_end_handle.set(Some((i, j)));
+                m_stat_handle.set(true);
+            }
+            MouseEventType::MOUSEENTER => {
+                if *m_stat_handle {
+                    m_end_handle.set(Some((i, j)));
                 }
             }
         })
@@ -63,37 +61,41 @@ pub fn SourcePlate(props: &SourcePlateProps) -> Html {
         let m_stat_handle = m_stat_handle.clone();
 
         Callback::from(move |_: MouseEvent| {
-        m_stat_handle.set(false);
-        if let Some(ul) = *m_start_handle {
-            if let Some(br) = *m_end_handle {
-                if let Ok(rd) = RegionDisplay::try_from((ul.0, ul.1, br.0, br.1)) {
-                    ct_dispatch.reduce_mut(|state| {
-                        state.transfer.source_region = Region::from(&rd);
-                    });
+            m_stat_handle.set(false);
+            if let Some(ul) = *m_start_handle {
+                if let Some(br) = *m_end_handle {
+                    if let Ok(rd) = RegionDisplay::try_from((ul.0, ul.1, br.0, br.1)) {
+                        ct_dispatch.reduce_mut(|state| {
+                            state.transfer.transfer_region.source_region = Region::from(&rd);
+                        });
+                    }
                 }
             }
-        }
         })
     };
 
     let mouseleave_callback = Callback::clone(&mouseup_callback);
 
-    let rows = (1..=props.source_plate.plate.size().0).map(|i| {
-        let row = (1..=props.source_plate.plate.size().1).map(|j| {
+    let rows = (1..=props.source_plate.plate.size().0)
+        .map(|i| {
+            let row = (1..=props.source_plate.plate.size().1)
+                .map(|j| {
+                    html! {
+                        <SourcePlateCell i={i} j={j}
+                        selected={in_rect(*m_start.clone(), *m_end.clone(), (i,j))}
+                        mouse={mouse_callback.clone()}
+                        in_transfer={source_wells.contains(&(i,j))}
+                        />
+                    }
+                })
+                .collect::<Html>();
             html! {
-                <SourcePlateCell i={i} j={j}
-                selected={in_rect(*m_start.clone(), *m_end.clone(), (i,j))}
-                mouse={mouse_callback.clone()}
-                in_transfer={source_wells.contains(&(i,j))}
-                />
+                <tr>
+                    { row }
+                </tr>
             }
-        }).collect::<Html>();
-        html! {
-            <tr>
-                { row }
-            </tr>
-        }
-    }).collect::<Html>();
+        })
+        .collect::<Html>();
 
     html! {
         <div class="source_plate">
@@ -115,13 +117,13 @@ pub struct SourcePlateCellProps {
     i: u8,
     j: u8,
     selected: bool,
-    mouse: Callback<(u8,u8, MouseEventType)>,
+    mouse: Callback<(u8, u8, MouseEventType)>,
     in_transfer: Option<bool>,
 }
 #[derive(Debug)]
 pub enum MouseEventType {
     MOUSEDOWN,
-    MOUSEENTER
+    MOUSEENTER,
 }
 
 #[function_component]
@@ -132,11 +134,11 @@ fn SourcePlateCell(props: &SourcePlateCellProps) -> Html {
     };
     let in_transfer_class = match props.in_transfer {
         Some(true) => Some("in_transfer"),
-        _ => None
+        _ => None,
     };
     let mouse = Callback::clone(&props.mouse);
     let mouse2 = Callback::clone(&props.mouse);
-    let (i,j) = (props.i.clone(), props.j.clone());
+    let (i, j) = (props.i.clone(), props.j.clone());
 
     html! {
         <td class={classes!("plate_cell", selected_class, in_transfer_class)}
