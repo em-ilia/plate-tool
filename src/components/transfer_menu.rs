@@ -176,7 +176,12 @@ pub fn TransferMenu() -> Html {
                             ct_state.transfer.transfer_region,
                             ct_state.transfer.name.clone()
                         );
-                        main_dispatch.reduce_mut(|state| state.transfers.push(new_transfer));
+                        main_dispatch.reduce_mut(|state| {
+                            state.transfers.push(new_transfer);
+                            state.selected_transfer = state.transfers.last()
+                                                        .expect("An element should have just been added")
+                                                        .get_uuid();
+                        });
                     }
                 }
             } else {
