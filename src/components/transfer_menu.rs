@@ -221,25 +221,25 @@ pub fn TransferMenu() -> Html {
         <div class="transfer_menu">
             <form>
             <div>
-                <label for="name">{"Name:"}</label>
+                <label for="name"><h3>{"Name:"}</h3></label>
                 <input type="text" name="name"
                 onchange={on_name_change}
                 value={ct_state.transfer.name.clone()}/>
             </div>
             <div>
-                <label for="src_region">{"Source Region:"}</label>
+                <label for="src_region"><h3>{"Source Region:"}</h3></label>
                 <input type="text" name="src_region"
                 onchange={on_src_region_change}
                 value={RegionDisplay::from(&ct_state.transfer.transfer_region.source_region).text}/>
             </div>
             <div>
-                <label for="dest_region">{"Destination Region:"}</label>
+                <label for="dest_region"><h3>{"Destination Region:"}</h3></label>
                 <input type="text" name="dest_region"
                 onchange={on_dest_region_change}
                 value={RegionDisplay::from(&ct_state.transfer.transfer_region.dest_region).text}/>
             </div>
             <div>
-            {"Source Interleave "}
+            <h3>{"Source Interleave "}</h3>
             <label for="source_interleave_x">{"Row:"}</label>
             <input type="number" name="source_interleave_x"
             onchange={on_source_interleave_x_change}
@@ -250,7 +250,7 @@ pub fn TransferMenu() -> Html {
             value={ct_state.transfer.transfer_region.interleave_source.1.to_string()}/>
             </div>
             <div>
-            {"Destination Interleave "}
+            <h3>{"Destination Interleave "}</h3>
             <label for="dest_interleave_x">{"Row:"}</label>
             <input type="number" name="dest_interleave_x"
             onchange={on_dest_interleave_x_change}
@@ -260,12 +260,14 @@ pub fn TransferMenu() -> Html {
             onchange={on_dest_interleave_y_change}
             value={ct_state.transfer.transfer_region.interleave_dest.1.to_string()}/>
             </div>
+            <div id="controls">
             <input type="button" name="new_transfer" onclick={new_transfer_button_callback}
             value={"New"} />
             <input type="button" name="save_transfer" onclick={save_transfer_button_callback}
             value={"Save"} />
             <input type="button" name="delete_transfer" onclick={delete_transfer_button_callback}
             value={"Delete"} />
+            </div>
             </form>
         </div>
     }

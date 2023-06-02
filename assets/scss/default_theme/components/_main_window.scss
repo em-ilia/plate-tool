@@ -1,0 +1,20 @@
+div.main_container {
+	height: 95vh;
+	width: 98vw;
+	margin-top: 2.5vh;
+	margin-left: 1vw;
+
+	display: grid;
+	grid-template-columns: [left] minmax(min-content, 1fr) [right] 2fr;
+	grid-template-rows: [upper] 2fr [lower] 1fr;
+
+	column-gap: 1vw;
+	row-gap: 1vh;
+}
+
+.dialog {
+	padding: 1em;
+}
+.dialog::backdrop {
+	background: rgba(0,125,255,0.3);
+}

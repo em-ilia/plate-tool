@@ -1,0 +1,33 @@
+@use "sass:color";
+@use "sass:math";
+
+$-color-white: hsl(30 5% 90%);
+$-color-dark:  color.adjust($-color-white, $lightness: -60%);
+$-color-light: hsl(190 80% 30%);
+$-ff-serif: "Inconsolata", monospace;
+$-ff-sans: "Jost", sans-serif;
+$-fs-900: math.div(100rem, 16);
+
+@forward "base" with (
+  $color-white: $-color-white,
+  $color-dark: $-color-dark,
+  $color-light: $-color-light,
+  $ff-serif: $-ff-serif,
+  $ff-sans: $-ff-sans,
+  $fs-900: $-fs-900
+);
+
+@font-face {
+  font-family: "Inconsolata";
+  src: url("/fonts/Inconsolata.ttf");
+
+  font-display: swap;
+  font-variation-settings: "wdth" 85;
+}
+
+@font-face {
+  font-family: "Jost";
+  src: url("/fonts/Jost.ttf");
+
+  font-display: swap;
+}

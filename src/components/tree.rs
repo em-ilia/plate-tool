@@ -186,8 +186,8 @@ pub fn Tree(props: &TreeProps) -> Html {
                 <PlateInfoModal id={id} dialog_close_callback={plate_info_close_callback}
                 delete_button_callback={plate_info_delete_callback}/>
             }
-            // Temporary
-            <div>
+
+            <div id="controls">
             <button type="button"
             onclick={
                 let open_new_plate_callback = props.open_new_plate_callback.clone();

@@ -1,0 +1,61 @@
+@use "sass:color";
+@use "../variables" as *;
+
+div.transfer_menu {
+	position: relative;
+	width: 100%;
+	height: 100%;
+
+	grid-column: left / left;
+	grid-row: lower / lower;
+
+	border: 2px solid $color-dark;
+
+	form {
+		padding-top: 3%;
+		padding-bottom: 1%;
+		display: flex;
+		flex-direction: column;
+		justify-content: flex-start;
+		align-items: flex-start;
+
+		label {
+			display: inline;
+			* { display: inline; }
+		}
+	}
+
+	padding-left: 0.5rem;
+
+	input:invalid {
+		background-color: #faa;
+	}
+
+	div#controls {
+		align-self: flex-end;
+		input {
+			padding: 2px 3px 2px 3px;
+			margin-left: 0;
+		}
+	}
+}
+
+input {
+	text-align: center;
+	margin-left: 0.5em;
+	margin-right: 0.5em;
+	margin-top: 1%;
+	margin-bottom: 1%;
+	line-height: 1em;
+	padding: 0;
+
+	&[type="text"] {
+		width: 4em;
+	}
+	&[name="name"] {
+		width: 6em; // Override above
+	}
+	&[type="number"] {
+		width: 2em;
+	}
+}
