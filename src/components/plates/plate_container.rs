@@ -1,20 +1,37 @@
 #![allow(non_snake_case)]
-use dioxus::prelude::*;
-use super::source_plate::SourcePlate;
+use yew::prelude::*;
+
+use crate::data::plate_instances::PlateInstance;
+
 use super::destination_plate::DestinationPlate;
+use super::source_plate::SourcePlate;
 
-static STYLE: &'static str = include_str!("plate_container.css");
+#[derive(Properties, PartialEq)]
+pub struct PlateContainerProps {
+    pub source_dims: Option<PlateInstance>,
+    pub destination_dims: Option<PlateInstance>,
+}
 
-#[inline_props]
-pub fn PlateContainer(cx: Scope, source_dims: (u8,u8), destination_dims: (u8,u8)) -> Element {
-    cx.render(rsx! {
-        style { STYLE }
-        div {
-            class: "plate_container",
-            SourcePlate {width: source_dims.0,
-                         height: source_dims.1},
-            DestinationPlate {width: destination_dims.0,
-                              height: destination_dims.1}
-        }
-    })
+#[function_component]
+pub fn PlateContainer(props: &PlateContainerProps) -> Html {
+    html! {
+        <div class="plate_container">
+            if let Some(spi) = props.source_dims.clone() {
+            if let Some(dpi) = props.destination_dims.clone() {
+            <div>
+                <h2>{spi.name.clone()}</h2>
+                <SourcePlate source_plate={spi.clone()} destination_plate={dpi.clone()} />
+            </div>
+            <div>
+                <h2>{dpi.name.clone()}</h2>
+                <DestinationPlate source_plate={spi.clone()} destination_plate={dpi.clone()} />
+            </div>
+            } else {
+                <h2>{"No Destination Plate Selected"}</h2>
+            }
+            } else {
+                <h2>{"No Source Plate Selected"}</h2>
+            }
+        </div>
+    }
 }

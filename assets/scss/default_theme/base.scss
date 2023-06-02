@@ -1,0 +1,214 @@
+//
+//
+// Do Not Change This File!
+//
+//
+@use "sass:math";
+/* ----------------- */
+/* Custom Properties */
+/* ----------------- */
+/*
+  This values are to be overridden
+  after being injected into
+  the global scope.
+*/
+
+  /* colors */
+
+$color-dark:  hsl(0 0% 0%) !default; /* Black */
+$color-light: hsl(0 0% 50%) !default; /* Gray */
+$color-white: hsl(0 0% 100%) !default;/* White */
+
+  /* font */
+
+  /* Sizes divided by 16 so values given in px */
+$fs-900: math.div(125rem, 16) !default;
+$fs-800: math.div(75rem, 16) !default;
+$fs-700: math.div(56rem, 16) !default;
+$fs-600: math.div(32rem, 16) !default;
+$fs-500: math.div(28rem, 16) !default;
+$fs-400: math.div(24rem, 16) !default;
+$fs-300: math.div(18rem, 16) !default;
+$fs-200: math.div(16rem, 16) !default;
+
+$ff-serif: serif !default;
+$ff-sans-cond: sans-serif !default;
+$ff-sans: sans-serif !default;
+
+/* --------------- */
+/* Utility Classes */
+/* --------------- */
+
+/* Layouts */
+
+.container {
+  padding-inline: clamp(0.5rem, 4rem, 5rem);
+  margin-inline: auto;
+  max-width: 80rem;
+}
+
+.flex {
+  display: flex;
+  gap: 2rem;
+}
+
+.column {
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  align-content: center;
+}
+
+.row {
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-evenly;
+  align-content: baseline;
+  max-width: 100%;
+}
+
+.two-columns {
+  display: grid;
+  /* Will shrink to one column, never exceed two!
+   * The `max` in `minmax` asks that the columns
+   * be no smaller */
+  grid-template-columns: repeat(auto-fit, minmax(max(30rem, 40%), 1fr));
+  column-gap: 1rem;
+  justify-content: space-evenly;
+}
+
+.lock-bottom {
+  position: fixed;
+  bottom: 0%;
+}
+
+/* Other */
+
+.hr::after { /* Add fake hr after header */
+  content: '';
+
+  position: absolute;
+  display: block;
+  clear: both;
+  width: 100%;
+  height: 0.15rem;
+
+  background-color: black;
+}
+
+/* Color Classes */
+
+.bg-dark  { background-color: $color-dark; }
+.bg-light { background-color: $color-light; }
+.bg-white { background-color: $color-white; }
+
+.text-dark  { color: $color-dark; }
+.text-light { color: $color-light; }
+.text-white { color: $color-white; }
+
+/* Font Classes */
+
+.fs-900 { font-size: $fs-900; }
+.fs-800 { font-size: $fs-800; }
+.fs-700 { font-size: $fs-700; }
+.fs-600 { font-size: $fs-600; }
+.fs-500 { font-size: $fs-500; }
+.fs-400 { font-size: $fs-400; }
+.fs-300 { font-size: $fs-300; }
+.fs-200 { font-size: $fs-200; }
+
+.ff-serif { font-family: $ff-serif; }
+.ff-sans-cond { font-family: $ff-sans-cond; }
+.ff-sans { font-family: $ff-sans; }
+
+.uppercase { text-transform: uppercase; }
+.lowercase { text-transform: lowercase; }
+
+/* Semantic Tags and Their Classes */
+
+header {
+  margin-bottom: 3vh;
+}
+
+section:not(:last-of-type) {
+  margin-bottom: 3vh;
+}
+
+footer {
+  margin-top: 3vh;
+}
+
+/* ----- */
+/* Reset */
+/* ----- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body, h1, h2, h3, h4, h5, h6, p {
+  margin: 0;
+}
+
+h1, h2, h3, h4, h5, h6, p {
+  font-weight: 400;
+}
+
+h1, h2, h3 {
+  line-height: 1.1;
+}
+
+body {
+  font-family: $ff-sans;
+  font-size: $fs-400;
+  color: $color-dark;
+  background-color: $color-white;
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+main {
+  margin-left: 1vw;
+  margin-top: 1vh;
+  * {
+    z-index: 2;
+  }
+}
+
+footer {
+  z-index: 2;
+}
+
+img, picture {
+  max-width: 100%;
+  display: block;
+}
+
+input, button, textarea, select {
+  font: inherit;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behaviour: auto !important;
+	}
+}
+
+/* -------------------- */
+/* Non-Reusable Classes */
+/* -------------------- */
+/* meant for these pages
+ * only, not to be used
+ * in practice          */
+
+.colors--block {
+  padding: 3rem 1rem 1rem;
+  border: 1px solid black;
+}

@@ -1,9 +1,16 @@
+use serde::{Deserialize, Serialize};
+
 use super::plate::Plate;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Debug)]
 pub enum Region {
     Rect((u8, u8), (u8, u8)),
     Point((u8, u8)),
+}
+impl Default for Region {
+    fn default() -> Self {
+        Region::Point((1, 1))
+    }
 }
 impl TryFrom<Region> for ((u8, u8), (u8, u8)) {
     type Error = &'static str;
@@ -17,51 +24,71 @@ impl TryFrom<Region> for ((u8, u8), (u8, u8)) {
     }
 }
 
-pub struct TransferRegion<'a> {
-    pub source_plate: &'a Plate,
+#[derive(PartialEq, Eq, Clone, Copy, Serialize, Deserialize, Debug)]
+pub struct TransferRegion {
+    pub source_plate: Plate,
     pub source_region: Region, // Even if it is just a point, we don't want corners.
-    pub dest_plate: &'a Plate,
+    pub dest_plate: Plate,
     pub dest_region: Region,
-    pub interleave_source: Option<(i8, i8)>,
-    pub interleave_dest: Option<(i8, i8)>,
+    pub interleave_source: (i8, i8),
+    pub interleave_dest: (i8, i8),
 }
 
-impl TransferRegion<'_> {
-    pub fn get_source_wells(&self) -> Vec<(u8, u8)> {
-        if let Region::Rect(c1, c2) = self.source_region {
-            let mut wells = Vec::<(u8, u8)>::new();
-            let (ul, br) = standardize_rectangle(&c1, &c2);
-            let (interleave_i, interleave_j) = self.interleave_source.unwrap_or((1, 1));
-            // NOTE: This will panic if either is 0!
-            // We'll reassign these values (still not mutable) just in case.
-            // This behaviour shouldn't be replicated for destination wells
-            // because a zero step permits pooling.
-            let (interleave_i, interleave_j) = (i8::max(interleave_i, 1), i8::max(interleave_j, 1));
-
-            for i in (ul.0..=br.0).step_by(i8::abs(interleave_i) as usize) {
-                for j in (ul.1..=br.1).step_by(i8::abs(interleave_j) as usize) {
-                    // NOTE: It looks like we're ignoring negative interleaves,
-                    // because it wouldn't make a difference here---the same
-                    // wells will still be involved in the transfer.
-                    wells.push((i, j))
-                }
-            }
-            return wells;
-        } else {
-            panic!("Source region is just a point!")
+impl Default for TransferRegion {
+    fn default() -> Self {
+        TransferRegion {
+            source_plate: Plate::default(),
+            source_region: Region::default(),
+            dest_plate: Plate::default(),
+            dest_region: Region::default(),
+            interleave_source: (1, 1),
+            interleave_dest: (1, 1),
         }
     }
+}
+
+impl TransferRegion {
+    pub fn get_source_wells(&self) -> Vec<(u8, u8)> {
+        match self.source_region {
+            Region::Rect(c1, c2) => {
+                let mut wells = Vec::<(u8, u8)>::new();
+                let (ul, br) = standardize_rectangle(&c1, &c2);
+                let (interleave_i, interleave_j) = self.interleave_source;
+                // NOTE: This will panic if either is 0!
+                // We'll reassign these values (still not mutable) just in case.
+                // This behaviour shouldn't be replicated for destination wells
+                // because a zero step permits pooling.
+                let (interleave_i, interleave_j) =
+                    (i8::max(interleave_i, 1), i8::max(interleave_j, 1));
+
+                for i in (ul.0..=br.0).step_by(i8::abs(interleave_i) as usize) {
+                    for j in (ul.1..=br.1).step_by(i8::abs(interleave_j) as usize) {
+                        // NOTE: It looks like we're ignoring negative interleaves,
+                        // because it wouldn't make a difference here---the same
+                        // wells will still be involved in the transfer.
+                        wells.push((i, j))
+                    }
+                }
+                return wells;
+            }
+            Region::Point(p) => return vec![p],
+        }
+    }
+
     pub fn get_destination_wells(&self) -> Vec<(u8, u8)> {
         let map = self.calculate_map();
         let source_wells = self.get_source_wells();
 
         let mut wells = Vec::<(u8, u8)>::new();
 
+        // log::debug!("GDW:");
         for well in source_wells {
             if let Some(mut dest_wells) = map(well) {
+                // log::debug!("Map {:?} to {:?}", well, dest_wells);
                 wells.append(&mut dest_wells);
             }
         }
+        // log::debug!("GDW END.");
 
         return wells;
     }
@@ -69,20 +96,22 @@ impl TransferRegion<'_> {
     pub fn calculate_map(&self) -> Box<dyn Fn((u8, u8)) -> Option<Vec<(u8, u8)>> + '_> {
         // By validating first, we have a stronger guarantee that
         // this function will not panic. :)
+        // log::debug!("Validating: {:?}", self.validate());
         if let Err(msg) = self.validate() {
             eprintln!("{}", msg);
             eprintln!("This transfer will be empty.");
             return Box::new(|(_, _)| None);
         }
 
+        // log::debug!("What is ild? {:?}", self);
         let source_wells = self.get_source_wells();
-        let il_dest = self.interleave_dest.unwrap_or((1, 1));
-        let il_source = self.interleave_source.unwrap_or((1, 1));
+        let il_dest = self.interleave_dest;
+        let il_source = self.interleave_source;
 
-        let source_corners: ((u8, u8), (u8, u8)) = self
-            .source_region
-            .try_into()
-            .expect("Source region should not be a point");
+        let source_corners: ((u8, u8), (u8, u8)) = match self.source_region {
+            Region::Point((x, y)) => ((x, y), (x, y)),
+            Region::Rect(c1, c2) => (c1, c2),
+        };
         let (source_ul, _) = standardize_rectangle(&source_corners.0, &source_corners.1);
         // This map is not necessarily injective or surjective,
         // but we will have these properties in certain cases.
@@ -116,50 +145,80 @@ impl TransferRegion<'_> {
             }
             Region::Rect(c1, c2) => {
                 return Box::new(move |(i, j)| {
-                    // Because of our call to validate,
-                    // we can assume that our destination region contains
-                    // an integer number of our source regions.
                     if source_wells.contains(&(i, j)) {
-                        // Find points by checking congruence class
                         let possible_destination_wells = create_dense_rectangle(&c1, &c2);
-                        let (ds1, _) = standardize_rectangle(&c1, &c2);
-                        let (s1, s2) = standardize_rectangle(&source_corners.0, &source_corners.1);
-                        let dims = (
-                            s2.0.checked_sub(s1.0).unwrap() + 1,
-                            s2.1.checked_sub(s1.1).unwrap() + 1,
+                        let (d_ul, d_br) = standardize_rectangle(&c1, &c2);
+                        let (s_ul, s_br) =
+                            standardize_rectangle(&source_corners.0, &source_corners.1);
+                        let s_dims = (
+                            s_br.0.checked_sub(s_ul.0).unwrap() + 1,
+                            s_br.1.checked_sub(s_ul.1).unwrap() + 1,
                         );
-
-                        /*
-                        println!("{} % {} == {}", i, dims.0, i*il_dest.0.abs() as u8 % dims.0);
-                        for a in ds1.0..=ds2.0 {
-                            for b in ds1.1..=ds2.1 {
-                                println!("({},{}): {} % {} == {}", a, b,
-                                a.checked_sub(ds1.0).unwrap()+1, dims.0,
-                                (a.checked_sub(ds1.0).unwrap()+1) % dims.0);
-                            }
-                        }
-                        for a in ds1.0..=ds2.0 {
-                            for b in ds1.1..=ds2.1 {
-                                println!("({},{}): {} % {} == {}", a, b,
-                                a.checked_sub(ds1.0).unwrap()+1, il_dest.0.abs() as u8,
-                                (a.checked_sub(ds1.0).unwrap()+1) % il_dest.0.abs() as u8);
-                            }
-                        }
-                        */
+                        let d_dims = (
+                            d_br.0.checked_sub(d_ul.0).unwrap() + 1,
+                            d_br.1.checked_sub(d_ul.1).unwrap() + 1,
+                        );
+                        let N_s = (
+                            // Number of used source wells
+                            (s_dims.0 + il_source.0.abs() as u8 - 1)
+                                .div_euclid(il_source.0.abs() as u8),
+                            (s_dims.1 + il_source.1.abs() as u8 - 1)
+                                .div_euclid(il_source.1.abs() as u8),
+                        );
+                        let D_per_replicate = (
+                            // How many wells are used per replicate?
+                            (N_s.0 * (il_dest.0.abs() as u8)),
+                            (N_s.1 * (il_dest.1.abs() as u8)),
+                        );
+                        let count = (
+                            // How many times can we replicate?
+                            (1..)
+                                .position(|n| {
+                                    n * N_s.0 * il_dest.0.abs() as u8 - il_dest.0.abs() as u8 + 1
+                                        > d_dims.0
+                                })
+                                .unwrap() as u8,
+                            (1..)
+                                .position(|n| {
+                                    n * N_s.1 * il_dest.1.abs() as u8 - il_dest.1.abs() as u8 + 1
+                                        > d_dims.1
+                                })
+                                .unwrap() as u8,
+                        );
+                        let i = i
+                            .saturating_sub(s_ul.0)
+                            .saturating_div(il_source.0.abs() as u8);
+                        let j = j
+                            .saturating_sub(s_ul.1)
+                            .saturating_div(il_source.1.abs() as u8);
+                        // log::debug!("N_s: {:?}, d_dims: {:?}, D_per: {:?}, count: {:?}", N_s, d_dims, D_per_replicate, count);
 
                         Some(
                             possible_destination_wells
                                 .into_iter()
-                                .filter(|(x, y)| {
-                                    i * il_dest.0.abs() as u8 % dims.0
-                                        == (x.checked_sub(ds1.0).unwrap() + 1) % dims.0
-                                        && j * il_dest.1.abs() as u8 % dims.1
-                                            == (y.checked_sub(ds1.1).unwrap() + 1) % dims.1
+                                .filter(|(x, _)| {
+                                    x.checked_sub(d_ul.0).unwrap()
+                                        % (N_s.0 * il_dest.0.abs() as u8) // Counter along x
+                                    == ((il_dest.0.abs() as u8 *i))
+                                        % (N_s.0 * il_dest.0.abs() as u8)
+                                })
+                                .filter(|(_, y)| {
+                                    y.checked_sub(d_ul.1).unwrap()
+                                        % (N_s.1 * il_dest.1.abs() as u8) // Counter along u
+                                    == ((il_dest.1.abs() as u8 *j))
+                                        % (N_s.1 * il_dest.1.abs() as u8)
                                 })
                                 .filter(|(x, y)| {
-                                    (x.checked_sub(ds1.0).unwrap()) % il_dest.0.abs() as u8 == 0
-                                        && (y.checked_sub(ds1.1).unwrap()) % il_dest.1.abs() as u8
-                                            == 0
+                                    // How many times have we replicated? < How many are we allowed
+                                    // to replicate?
+                                    x.checked_sub(d_ul.0)
+                                        .unwrap()
+                                        .div_euclid(N_s.0 * il_dest.0.abs() as u8)
+                                        < count.0
+                                        && y.checked_sub(d_ul.1)
+                                            .unwrap()
+                                            .div_euclid(N_s.1 * il_dest.1.abs() as u8)
+                                            < count.1
                                 })
                                 .collect(),
                         )
@@ -180,11 +239,12 @@ impl TransferRegion<'_> {
         //     - Are the wells in the source really there?
         //     - In a replication region, do the source lengths divide the destination lengths?
         //     - Are the interleaves valid?
-        let il_source = self.interleave_source.unwrap_or((1, 1));
-        let il_dest = self.interleave_dest.unwrap_or((1, 1));
+        let il_source = self.interleave_source;
+        let il_dest = self.interleave_dest;
 
         match self.source_region {
-            Region::Point(_) => return Err("Source region should not be a point!"),
+            Region::Point(_) => return Ok(()), // Should make sure it's actually in the plate, leave for
+            // later
             Region::Rect(s1, s2) => {
                 // Check if all source wells exist:
                 if s1.0 == 0 || s1.1 == 0 || s2.0 == 0 || s2.1 == 0 {
@@ -196,6 +256,7 @@ impl TransferRegion<'_> {
                     return Err("Source region is out-of-bounds! (Too tall)");
                 }
                 if s1.1 > source_max.1 || s2.1 > source_max.1 {
+                    // log::debug!("s1.1: {}, max.1: {}", s1.1, source_max.1);
                     return Err("Source region is out-of-bounds! (Too wide)");
                 }
                 // Check that source lengths divide destination lengths
@@ -235,10 +296,8 @@ impl TransferRegion<'_> {
             }
         }
 
-        if let Some(source_il) = self.interleave_source {
-            if source_il.0 == 0 || source_il.1 == 0 {
-                return Err("Source interleave cannot be zero!");
-            }
+        if il_source.0 == 0 || il_dest.1 == 0 {
+            return Err("Source interleave cannot be zero!");
         }
 
         // Check if all destination wells exist:
@@ -292,7 +351,7 @@ use std::fmt;
 use std::ops::Mul;
 
 #[cfg(debug_assertions)] // There should be no reason to print a transfer otherwise
-impl fmt::Display for TransferRegion<'_> {
+impl fmt::Display for TransferRegion {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "Source Plate:")?;
         let source_dims = self.source_plate.size();
@@ -330,75 +389,131 @@ impl fmt::Display for TransferRegion<'_> {
 
 #[cfg(test)]
 mod tests {
+    use wasm_bindgen_test::*;
+
     use crate::data::plate::*;
     use crate::data::transfer_region::*;
 
     #[test]
+    #[wasm_bindgen_test]
     fn test_simple_transfer() {
         let source = Plate::new(PlateType::Source, PlateFormat::W96);
         let destination = Plate::new(PlateType::Destination, PlateFormat::W384);
 
         let transfer1 = TransferRegion {
-            source_plate: &source,
+            source_plate: source,
             source_region: Region::Rect((1, 1), (3, 3)),
-            dest_plate: &destination,
-            dest_region: Region::Point((3,3)),
-            interleave_source: None,
-            interleave_dest: None,
+            dest_plate: destination,
+            dest_region: Region::Point((3, 3)),
+            interleave_source: (1, 1),
+            interleave_dest: (1, 1),
         };
         let transfer1_map = transfer1.calculate_map();
-        assert_eq!(transfer1_map((1,1)), Some(vec!{(3,3)}), "Failed basic shift transfer 1");
-        assert_eq!(transfer1_map((1,2)), Some(vec!{(3,4)}), "Failed basic shift transfer 2");
-        assert_eq!(transfer1_map((2,2)), Some(vec!{(4,4)}), "Failed basic shift transfer 3");
+        assert_eq!(
+            transfer1_map((1, 1)),
+            Some(vec! {(3,3)}),
+            "Failed basic shift transfer 1"
+        );
+        assert_eq!(
+            transfer1_map((1, 2)),
+            Some(vec! {(3,4)}),
+            "Failed basic shift transfer 2"
+        );
+        assert_eq!(
+            transfer1_map((2, 2)),
+            Some(vec! {(4,4)}),
+            "Failed basic shift transfer 3"
+        );
 
         let transfer2 = TransferRegion {
-            source_plate: &source,
+            source_plate: source,
             source_region: Region::Rect((1, 1), (3, 3)),
-            dest_plate: &destination,
-            dest_region: Region::Point((3,3)),
-            interleave_source: Some((2,2)),
-            interleave_dest: None,
-        }; 
+            dest_plate: destination,
+            dest_region: Region::Point((3, 3)),
+            interleave_source: (2, 2),
+            interleave_dest: (1, 1),
+        };
         let transfer2_map = transfer2.calculate_map();
-        assert_eq!(transfer2_map((1,1)), Some(vec!{(3,3)}), "Failed source interleave, type simple 1");
-        assert_eq!(transfer2_map((1,2)), None, "Failed source interleave, type simple 2");
-        assert_eq!(transfer2_map((2,2)), None, "Failed source interleave, type simple 3");
-        assert_eq!(transfer2_map((3,3)), Some(vec!{(4,4)}), "Failed source interleave, type simple 4");
+        assert_eq!(
+            transfer2_map((1, 1)),
+            Some(vec! {(3,3)}),
+            "Failed source interleave, type simple 1"
+        );
+        assert_eq!(
+            transfer2_map((1, 2)),
+            None,
+            "Failed source interleave, type simple 2"
+        );
+        assert_eq!(
+            transfer2_map((2, 2)),
+            None,
+            "Failed source interleave, type simple 3"
+        );
+        assert_eq!(
+            transfer2_map((3, 3)),
+            Some(vec! {(4,4)}),
+            "Failed source interleave, type simple 4"
+        );
 
         let transfer3 = TransferRegion {
-            source_plate: &source,
+            source_plate: source,
             source_region: Region::Rect((1, 1), (3, 3)),
-            dest_plate: &destination,
-            dest_region: Region::Point((3,3)),
-            interleave_source: None,
-            interleave_dest: Some((2,3)),
-        }; 
+            dest_plate: destination,
+            dest_region: Region::Point((3, 3)),
+            interleave_source: (1, 1),
+            interleave_dest: (2, 3),
+        };
         let transfer3_map = transfer3.calculate_map();
-        assert_eq!(transfer3_map((1,1)), Some(vec!{(3,3)}), "Failed destination interleave, type simple 1");
-        assert_eq!(transfer3_map((2,1)), Some(vec!{(5,3)}), "Failed destination interleave, type simple 2");
-        assert_eq!(transfer3_map((1,2)), Some(vec!{(3,6)}), "Failed destination interleave, type simple 3");
-        assert_eq!(transfer3_map((2,2)), Some(vec!{(5,6)}), "Failed destination interleave, type simple 4");
+        assert_eq!(
+            transfer3_map((1, 1)),
+            Some(vec! {(3,3)}),
+            "Failed destination interleave, type simple 1"
+        );
+        assert_eq!(
+            transfer3_map((2, 1)),
+            Some(vec! {(5,3)}),
+            "Failed destination interleave, type simple 2"
+        );
+        assert_eq!(
+            transfer3_map((1, 2)),
+            Some(vec! {(3,6)}),
+            "Failed destination interleave, type simple 3"
+        );
+        assert_eq!(
+            transfer3_map((2, 2)),
+            Some(vec! {(5,6)}),
+            "Failed destination interleave, type simple 4"
+        );
     }
 
     #[test]
+    #[wasm_bindgen_test]
     fn test_replicate_transfer() {
         let source = Plate::new(PlateType::Source, PlateFormat::W96);
         let destination = Plate::new(PlateType::Destination, PlateFormat::W384);
 
         let transfer1 = TransferRegion {
-            source_plate: &source,
+            source_plate: source,
             source_region: Region::Rect((1, 1), (2, 2)),
-            dest_plate: &destination,
-            dest_region: Region::Rect((2,2),(11,11)),
-            interleave_source: None,
-            interleave_dest: Some((3,3)),
+            dest_plate: destination,
+            dest_region: Region::Rect((2, 2), (11, 11)),
+            interleave_source: (1, 1),
+            interleave_dest: (3, 3),
         };
         let transfer1_map = transfer1.calculate_map();
-        assert_eq!(transfer1_map((1,1)), Some(vec!{(2, 2), (2, 8), (8, 2), (8, 8)}), "Failed type replicate 1");
-        assert_eq!(transfer1_map((2,1)), Some(vec!{(5, 2), (5, 8), (11, 2), (11, 8)}), "Failed type replicate 1");
+        assert_eq!(
+            transfer1_map((1, 1)),
+            Some(vec! {(2, 2), (2, 8), (8, 2), (8, 8)}),
+            "Failed type replicate 1"
+        );
+        assert_eq!(
+            transfer1_map((2, 1)),
+            Some(vec! {(5, 2), (5, 8), (11, 2), (11, 8)}),
+            "Failed type replicate 1"
+        );
     }
 
     #[test]
-    fn test_pooling_transfer() {
-    }
+    #[wasm_bindgen_test]
+    fn test_pooling_transfer() {}
 }

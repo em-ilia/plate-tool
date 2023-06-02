@@ -3,17 +3,16 @@ mod components;
 mod data;
 
 use components::main_window::MainWindow;
-use dioxus::prelude::*;
-use fermi::*;
+use yew::prelude::*;
 
 #[cfg(debug_assertions)]
 use data::*;
 
-pub fn App(cx: Scope) -> Element {
-    use_init_atom_root(cx);
-    cx.render(rsx! {
-        MainWindow {}
-    })
+#[function_component]
+pub fn App() -> Html {
+    html! {
+        <MainWindow />
+    }
 }
 
 #[cfg(debug_assertions)]
@@ -22,17 +21,17 @@ pub fn plate_test() {
     let destination = plate::Plate::new(plate::PlateType::Destination, plate::PlateFormat::W384);
 
     let transfer = transfer_region::TransferRegion {
-        source_plate: &source,
+        source_plate: source,
         source_region: transfer_region::Region::Rect((1, 1), (2, 2)),
-        dest_plate: &destination,
-        dest_region: transfer_region::Region::Rect((2,2),(11,11)),
-        interleave_source: None,
-        interleave_dest: Some((3,3)),
+        dest_plate: destination,
+        dest_region: transfer_region::Region::Rect((2, 2), (11, 11)),
+        interleave_source: (1, 1),
+        interleave_dest: (3, 3),
     };
     println!("{}", transfer);
     let sws = transfer.get_source_wells();
     let m = transfer.calculate_map();
     for w in sws {
-        println!("{:?} -> {:?}", w,m(w));
+        println!("{:?} -> {:?}", w, m(w));
     }
 }

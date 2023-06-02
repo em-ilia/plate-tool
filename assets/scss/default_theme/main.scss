@@ -1,0 +1,10 @@
+// Global Variables
+@use "variables" as *;
+@use "components";
+
+.fs-900 { font-size: $fs-900; font-weight: 400;}
+.fs-800 { font-size: $fs-800; font-weight: 300;}
+.fs-700 { font-size: $fs-700; font-weight: 250;}
+.fs-600 { font-size: $fs-600; font-weight: 300;}
+.fs-500 { font-size: $fs-500; font-weight: 200;}
+.fs-400 { font-size: $fs-400; font-weight: 200;}

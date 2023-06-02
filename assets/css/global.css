@@ -6,6 +6,12 @@
 	font: inherit;
 	vertical-align: baseline;
 }
+h1, h2, h3 {
+	padding: 0;
+	margin: 0;
+	margin-bottom: 0.4em;
+	margin-top: 0.4em;
+}
 
 div.main_container {
 	height: 95vh;
@@ -25,6 +31,12 @@ div.tree {
 	height: 100%;
 	border: 2px solid green;
 }
+div.tree li {
+	user-select: none;
+}
+div.tree li.selected {
+	background: rgba(0,0,150,0.2);
+}
 
 div.transfer_menu {
 	grid-column: left / left;
@@ -33,9 +45,19 @@ div.transfer_menu {
 	height: 100%;
 	border: 2px solid orange;
 }
+div.transfer_menu input:invalid {
+	background-color: #faa;
+}
 
 div.plate_container {
 	border: 2px dashed purple;
 	grid-column: right / right;
 	grid-row: upper / 3;
+}
+
+.dialog {
+	padding: 1em;
+}
+.dialog::backdrop {
+	background: rgba(0,125,255,0.3);
 }

@@ -1,91 +1,159 @@
 #![allow(non_snake_case)]
-use dioxus::prelude::*;
 
-static STYLE: &'static str = include_str!("plate.css");
+use std::rc::Rc;
+use yew::prelude::*;
+use yewdux::prelude::*;
 
-#[derive(PartialEq, Props)]
+use crate::components::states::CurrentTransfer;
+use crate::data::plate_instances::PlateInstance;
+use crate::data::transfer_region::{Region, TransferRegion};
+
+use super::super::transfer_menu::RegionDisplay;
+
+#[derive(PartialEq, Properties)]
 pub struct SourcePlateProps {
-    width: u8,
-    height: u8,
-}
-struct SelectionState {
-    m_start: Option<(u8, u8)>,
-    m_end: Option<(u8, u8)>,
-    m_stat: bool,
+    pub source_plate: PlateInstance,
+    pub destination_plate: PlateInstance,
 }
 
-pub fn SourcePlate(cx: Scope<SourcePlateProps>) -> Element {
-    use_shared_state_provider(cx, || SelectionState {
-        m_start: None,
-        m_end: None,
-        m_stat: false,
-    });
+#[function_component]
+pub fn SourcePlate(props: &SourcePlateProps) -> Html {
+    let (ct_state, ct_dispatch) = use_store::<CurrentTransfer>();
+    let m_start_handle: UseStateHandle<Option<(u8, u8)>> = use_state_eq(|| None);
+    let m_end_handle: UseStateHandle<Option<(u8, u8)>> = use_state_eq(|| None);
+    let m_stat_handle: UseStateHandle<bool> = use_state_eq(|| false);
+    let m_start = m_start_handle.clone();
+    let m_end = m_end_handle.clone();
 
-    cx.render(rsx! {
-        div{
-            class: "source_plate",
-            style { STYLE }
-            table {
-                draggable: "false",
-                for i in 1..=cx.props.height {
-                    tr {
-                        draggable: "false",
-                        for j in 1..=cx.props.width {
-                            SourcePlateCell {i: i, j: j}
-                        }
+    if !(*m_stat_handle) {
+        let (pt1, pt2) = match ct_state.transfer.transfer_region.source_region {
+            Region::Point((x, y)) => ((x, y), (x, y)),
+            Region::Rect(c1, c2) => (c1, c2),
+        };
+        m_start_handle.set(Some(pt1));
+        m_end_handle.set(Some(pt2));
+    }
+
+    let source_wells = ct_state.transfer.transfer_region.get_source_wells();
+
+    let mouse_callback = {
+        let m_start_handle = m_start_handle.clone();
+        let m_end_handle = m_end_handle.clone();
+        let m_stat_handle = m_stat_handle.clone();
+
+        Callback::from(move |(i, j, t)| match t {
+            MouseEventType::MOUSEDOWN => {
+                m_start_handle.set(Some((i, j)));
+                m_end_handle.set(Some((i, j)));
+                m_stat_handle.set(true);
+            }
+            MouseEventType::MOUSEENTER => {
+                if *m_stat_handle {
+                    m_end_handle.set(Some((i, j)));
+                }
+            }
+        })
+    };
+
+    let mouseup_callback = {
+        let m_start_handle = m_start_handle.clone();
+        let m_end_handle = m_end_handle.clone();
+        let m_stat_handle = m_stat_handle.clone();
+
+        Callback::from(move |_: MouseEvent| {
+            m_stat_handle.set(false);
+            if let Some(ul) = *m_start_handle {
+                if let Some(br) = *m_end_handle {
+                    if let Ok(rd) = RegionDisplay::try_from((ul.0, ul.1, br.0, br.1)) {
+                        ct_dispatch.reduce_mut(|state| {
+                            state.transfer.transfer_region.source_region = Region::from(&rd);
+                        });
                     }
-                },
+                }
             }
-        }
-    })
-}
-
-#[inline_props]
-fn SourcePlateCell(cx: Scope<PlateCellProps>, i: u8, j: u8, color: Option<String>) -> Element {
-    let selection_state = use_shared_state::<SelectionState>(cx).unwrap();
-    let selected = in_rect(
-        selection_state.read().m_start,
-        selection_state.read().m_end,
-        (*i, *j),
-    );
-    let selected_class = match selected {
-        true => "current_select",
-        false => "",
-    };
-    let color_string = match color {
-        Some(c) => c.clone(),
-        None => "None".to_string(),
+        })
     };
 
-    cx.render(rsx! {
-        td {
-            class: "plate_cell {selected_class}",
-            draggable: "false",
-            style: "background: {color_string}",
-            onmousedown: move |_| {
-                selection_state.write().m_start = Some((*i,*j));
-                selection_state.write().m_end = None;
-                selection_state.write().m_stat = true;
-            },
-            onmouseenter: move |me: MouseEvent| {
-                if me.data.held_buttons().is_empty() {
-                    selection_state.write().m_stat = false;
-                }
-                if selection_state.read().m_stat {
-                    selection_state.write().m_end = Some((*i,*j))
-                }
-            },
-            onmouseup: move |_| {
-                selection_state.write().m_stat = false
-            },
-            div {
-                class: "plate_cell_inner"
+    let mouseleave_callback = Callback::clone(&mouseup_callback);
+
+    let rows = (1..=props.source_plate.plate.size().0)
+        .map(|i| {
+            let row = (1..=props.source_plate.plate.size().1)
+                .map(|j| {
+                    html! {
+                        <SourcePlateCell i={i} j={j}
+                        selected={in_rect(*m_start.clone(), *m_end.clone(), (i,j))}
+                        mouse={mouse_callback.clone()}
+                        in_transfer={source_wells.contains(&(i,j))}
+                        />
+                    }
+                })
+                .collect::<Html>();
+            html! {
+                <tr>
+                    { row }
+                </tr>
             }
-        }
-    })
+        })
+        .collect::<Html>();
+
+    html! {
+        <div class="source_plate">
+            <table
+            onmouseup={move |e| {
+                mouseup_callback.emit(e);
+            }}
+            onmouseleave={move |e| {
+                mouseleave_callback.emit(e);
+            }}>
+                { rows }
+            </table>
+        </div>
+    }
 }
 
-fn in_rect(corner1: Option<(u8, u8)>, corner2: Option<(u8, u8)>, pt: (u8, u8)) -> bool {
+#[derive(PartialEq, Properties)]
+pub struct SourcePlateCellProps {
+    i: u8,
+    j: u8,
+    selected: bool,
+    mouse: Callback<(u8, u8, MouseEventType)>,
+    in_transfer: Option<bool>,
+}
+#[derive(Debug)]
+pub enum MouseEventType {
+    MOUSEDOWN,
+    MOUSEENTER,
+}
+
+#[function_component]
+fn SourcePlateCell(props: &SourcePlateCellProps) -> Html {
+    let selected_class = match props.selected {
+        true => Some("current_select"),
+        false => None,
+    };
+    let in_transfer_class = match props.in_transfer {
+        Some(true) => Some("in_transfer"),
+        _ => None,
+    };
+    let mouse = Callback::clone(&props.mouse);
+    let mouse2 = Callback::clone(&props.mouse);
+    let (i, j) = (props.i.clone(), props.j.clone());
+
+    html! {
+        <td class={classes!("plate_cell", selected_class, in_transfer_class)}
+            onmousedown={move |_| {
+                mouse.emit((i,j, MouseEventType::MOUSEDOWN))
+            }}
+            onmouseenter={move |_| {
+                mouse2.emit((i,j, MouseEventType::MOUSEENTER))
+            }}>
+            <div class="plate_cell_inner" />
+        </td>
+    }
+}
+
+pub fn in_rect(corner1: Option<(u8, u8)>, corner2: Option<(u8, u8)>, pt: (u8, u8)) -> bool {
     if let (Some(c1), Some(c2)) = (corner1, corner2) {
         return pt.0 <= u8::max(c1.0, c2.0)
             && pt.0 >= u8::min(c1.0, c2.0)
@@ -98,10 +166,13 @@ fn in_rect(corner1: Option<(u8, u8)>, corner2: Option<(u8, u8)>, pt: (u8, u8)) -
 
 #[cfg(test)]
 mod tests {
+    use wasm_bindgen_test::*;
+
     use super::in_rect;
 
     // in_rect tests
     #[test]
+    #[wasm_bindgen_test]
     fn test_in_rect1() {
         // Test in center of rect
         let c1 = (1, 1);
@@ -113,6 +184,7 @@ mod tests {
     }
 
     #[test]
+    #[wasm_bindgen_test]
     fn test_in_rect2() {
         // Test on top/bottom edges of rect
         let c1 = (1, 1);
@@ -127,6 +199,7 @@ mod tests {
     }
 
     #[test]
+    #[wasm_bindgen_test]
     fn test_in_rect3() {
         // Test on left/right edges of rect
         let c1 = (1, 1);
@@ -141,6 +214,7 @@ mod tests {
     }
 
     #[test]
+    #[wasm_bindgen_test]
     fn test_in_rect4() {
         // Test cases that should fail
         let c1 = (1, 1);
