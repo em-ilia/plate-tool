@@ -76,22 +76,28 @@ pub fn MainWindow() -> Html {
                 web_sys::window().unwrap().alert_with_message("No transfers to export.").unwrap();
                 return ()
             }
+            web_sys::window().unwrap().alert_with_message("CSV export is currently not importable. Export as JSON if you'd like to back up your work!").unwrap();
             if let Ok(csv) = state_to_csv(&main_state) {
-                let csv: &str = &csv;
-                let blob = Blob::new_with_str_sequence(
-                                &Array::from_iter(std::iter::once(JsValue::from_str(csv))));
-                if let Ok(blob) = blob {
-                    let url = Url::create_object_url_with_blob(&blob).expect("We have a blob, why not URL?");
-                    // Beneath is the cool hack to download files
-                    let window = web_sys::window().unwrap();
-                    let document = window.document().unwrap();
-                    let anchor = document.create_element("a").unwrap()
-                                         .dyn_into::<HtmlAnchorElement>().unwrap();
-                    anchor.set_download("transfers.csv");
-                    anchor.set_href(&url);
-                    anchor.click();
-                }
+                save_str(&csv, "transfers.csv");
             }
+        })
+    };
+
+    let export_json_button_callback = {
+        let main_state = main_state.clone();
+        Callback::from(move |_| {
+            if let Ok(json) = serde_json::to_string(&main_state) {
+                save_str(&json, "plate-tool-state.json");
+            } else {
+                web_sys::window().unwrap().alert_with_message("Failed to export.").unwrap();
+            }
+        })
+    };
+
+    let import_json_button_callback = {
+        let main_dispatch = main_dispatch.clone();
+        Callback::from(move |_| {
+            !unimplemented!()
         })
     };
 
@@ -105,9 +111,10 @@ pub fn MainWindow() -> Html {
                     <button>{"Export"}</button>
                     <div>
                         <button onclick={export_csv_button_callback}>{"Export as CSV"}</button>
-                        <button>{"Export as ???"}</button>
+                        <button onclick={export_json_button_callback}>{"Export as JSON"}</button>
                     </div>
                 </div>
+                <button onclick={import_json_button_callback}>{"Import"}</button>
             </div>
         </div>
         <div class="main_container">
@@ -120,5 +127,21 @@ pub fn MainWindow() -> Html {
             }
         </div>
         </>
+    }
+}
+
+fn save_str(data: &str, name: &str) {
+    let blob = Blob::new_with_str_sequence(
+                    &Array::from_iter(std::iter::once(JsValue::from_str(data))));
+    if let Ok(blob) = blob {
+        let url = Url::create_object_url_with_blob(&blob).expect("We have a blob, why not URL?");
+        // Beneath is the cool hack to download files
+        let window = web_sys::window().unwrap();
+        let document = window.document().unwrap();
+        let anchor = document.create_element("a").unwrap()
+                             .dyn_into::<HtmlAnchorElement>().unwrap();
+        anchor.set_download(name);
+        anchor.set_href(&url);
+        anchor.click();
     }
 }

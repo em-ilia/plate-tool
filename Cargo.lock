@@ -560,6 +560,7 @@ dependencies = [
  "log",
  "regex",
  "serde",
+ "serde_json",
  "uuid",
  "wasm-bindgen",
  "wasm-bindgen-test",
