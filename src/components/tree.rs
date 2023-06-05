@@ -61,6 +61,7 @@ pub fn Tree(props: &TreeProps) -> Html {
                 if let Ok(id) = u128::from_str_radix(li.id().as_str(), 10) {
                     ct_dispatch.reduce_mut(|state| {
                         state.transfer.transfer_region.source_region = Region::default();
+                        state.transfer.transfer_region.dest_region = Region::default();
                     });
                     main_dispatch.reduce_mut(|state| {
                         state.selected_source_plate = Uuid::from_u128(id);
@@ -80,6 +81,7 @@ pub fn Tree(props: &TreeProps) -> Html {
             if let Some(li) = li {
                 if let Ok(id) = u128::from_str_radix(li.id().as_str(), 10) {
                     ct_dispatch.reduce_mut(|state| {
+                        state.transfer.transfer_region.source_region = Region::default();
                         state.transfer.transfer_region.dest_region = Region::default();
                     });
                     main_dispatch.reduce_mut(|state| {
