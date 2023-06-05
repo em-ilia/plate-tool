@@ -97,7 +97,7 @@ pub fn MainWindow() -> Html {
             <div class="dropdown">
                 <button>{"File"}</button>
                 <button onclick={new_button_callback}>{"New"}</button>
-                <button onclick={save_button_callback}>{"Save"}</button>
+                <button onclick={save_button_callback}>{"Export"}</button>
             </div>
         </div>
         <div class="main_container">

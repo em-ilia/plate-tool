@@ -14,17 +14,15 @@ div.upper_menu {
 		margin-right: 2px;
 
 		position: relative;
-		height: $menu-height;
 
 		display: flex;
 		flex-direction: column;
 
-		outline: 1px solid $color-dark;
 
 		button {
 			vertical-align: top;
 			border: none;
-			padding: 0;
+			padding: 0px 0.4em 0px 0.4em;
 			margin: 0;
 			cursor: pointer;
 			font-size: calc($menu-height*0.7);
@@ -34,13 +32,19 @@ div.upper_menu {
 			visibility: hidden;
 		}
 		*:first-child {
+			outline: 1px solid $color-dark;
 			visibility: visible;
 		}
 
-		&:hover * {
-			visibility: visible;
-			box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-			z-index: 1;
+		&:hover {
+			outline: 2px solid $color-dark;
+			z-index: 2;
+			* {
+				visibility: visible;
+				outline: 1px solid $color-dark;
+				box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.4);
+				z-index: 1;
+			}
 		}
 	}
 }
