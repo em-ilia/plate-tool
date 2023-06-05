@@ -1,8 +1,8 @@
 #![allow(non_snake_case)]
 use yew::prelude::*;
 use yewdux::prelude::*;
-use wasm_bindgen::{JsValue, JsCast};
-use web_sys::{Blob, Url, HtmlAnchorElement};
+use wasm_bindgen::{JsValue, JsCast, prelude::*};
+use web_sys::{Blob, Url, HtmlAnchorElement, HtmlDialogElement, HtmlInputElement, HtmlFormElement};
 use js_sys::Array;
 
 use super::new_plate_dialog::NewPlateDialog;
@@ -97,7 +97,63 @@ pub fn MainWindow() -> Html {
     let import_json_button_callback = {
         let main_dispatch = main_dispatch.clone();
         Callback::from(move |_| {
-            !unimplemented!()
+            let window = web_sys::window().unwrap();
+            let document = window.document().unwrap();
+            let body = document.body().unwrap();
+            let modal = document.create_element("dialog").unwrap().dyn_into::<HtmlDialogElement>().unwrap();
+            modal.set_text_content(Some("Import File:"));
+            let onclose_callback = {
+                let modal = modal.clone();
+                Closure::<dyn FnMut(_)>::new(move |_: Event| {
+                    modal.remove();
+                })
+            };
+            modal.set_onclose(Some(&onclose_callback.as_ref().unchecked_ref()));
+            onclose_callback.forget();
+
+            let form = document.create_element("form").unwrap().dyn_into::<HtmlFormElement>().unwrap();
+            let input = document.create_element("input").unwrap().dyn_into::<HtmlInputElement>().unwrap();
+            input.set_type("file");
+            input.set_accept(".json");
+            form.append_child(&input).unwrap();
+
+            let input_callback = {
+                let main_dispatch = main_dispatch.clone();
+                let modal = modal.clone();
+                Closure::<dyn FnMut(_)>::new(move |e: Event| {
+                if let Some(input) = e.current_target() {
+                    let input = input.dyn_into::<HtmlInputElement>().expect("We know this is an input.");
+                    if let Some(files) = input.files() {
+                        if let Some(file) = files.get(0) {
+                            let fr = web_sys::FileReader::new().unwrap();
+                            fr.read_as_text(&file).unwrap();
+                            let fr1 = fr.clone(); // Clone to avoid outliving closure
+                            let main_dispatch = main_dispatch.clone(); // Clone to satisfy FnMut
+                                                                       // trait
+                            let modal = modal.clone();
+                            let onload = Closure::<dyn FnMut(_)>::new(move |e: Event| {
+                                log::debug!("{:?}",&fr1.result());
+                                if let Some(value) = &fr1.result().ok().and_then(|v| v.as_string()) {
+                                    let ms = serde_json::from_str::<MainState>(value);
+                                    match ms {
+                                        Ok(ms) => main_dispatch.set(ms),
+                                        Err(e) => log::debug!("{:?}", e),
+                                    };
+                                    modal.close();
+                                }
+                            });
+                            fr.set_onload(Some(&onload.as_ref().unchecked_ref()));
+                            onload.forget(); // Magic (don't touch)
+                        }
+                    }
+                }
+            })};
+            input.set_onchange(Some(&input_callback.as_ref().unchecked_ref()));
+            input_callback.forget(); // Magic straight from the docs, don't touch :(
+
+            modal.append_child(&form).unwrap();
+            body.append_child(&modal).unwrap();
+            modal.show_modal().unwrap();
         })
     };
 
