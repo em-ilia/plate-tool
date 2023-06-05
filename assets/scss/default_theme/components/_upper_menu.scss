@@ -1,0 +1,46 @@
+@use "sass:color";
+@use "../variables" as *;
+
+div.upper_menu {
+	position: absolute;
+	top: 0px;
+	left: 0px;
+
+	$menu-height: min(2.5vh, 25px);
+	height: $menu-height;
+	padding-left: 1vw;
+
+	div.dropdown {
+		margin-right: 2px;
+
+		position: relative;
+		height: $menu-height;
+
+		display: flex;
+		flex-direction: column;
+
+		outline: 1px solid $color-dark;
+
+		button {
+			vertical-align: top;
+			border: none;
+			padding: 0;
+			margin: 0;
+			cursor: pointer;
+			font-size: calc($menu-height*0.7);
+		}
+
+		* {
+			visibility: hidden;
+		}
+		*:first-child {
+			visibility: visible;
+		}
+
+		&:hover * {
+			visibility: visible;
+			box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+			z-index: 1;
+		}
+	}
+}

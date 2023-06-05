@@ -365,7 +365,7 @@ fn letters_to_num(letters: &str) -> Option<u8> {
     }
     return Some(num);
 }
-fn num_to_letters(num: u8) -> Option<String> {
+pub fn num_to_letters(num: u8) -> Option<String> {
     if num == 0 {
         return None;
     } // Otherwise, we will not return none!
