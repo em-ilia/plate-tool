@@ -54,6 +54,21 @@ pub fn MainWindow() -> Html {
         })
     };
 
+    let new_button_callback = {
+        let main_dispatch = main_dispatch.clone();
+        let ct_dispatch = ct_dispatch.clone();
+        Callback::from(move |_| {
+            let window = web_sys::window().unwrap();
+            let confirm = window.confirm_with_message("This will reset all plates and transfers. Proceed?");
+            if let Ok(confirm) = confirm {
+                if confirm {
+                    main_dispatch.set(MainState::default());
+                    ct_dispatch.set(CurrentTransfer::default());
+                }
+            }
+        })
+    };
+
     let save_button_callback = {
         let main_state = main_state.clone();
         Callback::from(move |_| {
@@ -81,6 +96,7 @@ pub fn MainWindow() -> Html {
         <div class="upper_menu">
             <div class="dropdown">
                 <button>{"File"}</button>
+                <button onclick={new_button_callback}>{"New"}</button>
                 <button onclick={save_button_callback}>{"Save"}</button>
             </div>
         </div>
