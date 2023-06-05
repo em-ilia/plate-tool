@@ -72,6 +72,10 @@ pub fn MainWindow() -> Html {
     let save_button_callback = {
         let main_state = main_state.clone();
         Callback::from(move |_| {
+            if main_state.transfers.len() == 0 {
+                web_sys::window().unwrap().alert_with_message("No transfers to export.").unwrap();
+                return ()
+            }
             if let Ok(csv) = state_to_csv(&main_state) {
                 let csv: &str = &csv;
                 let blob = Blob::new_with_str_sequence(
