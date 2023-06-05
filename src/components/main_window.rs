@@ -69,7 +69,7 @@ pub fn MainWindow() -> Html {
         })
     };
 
-    let save_button_callback = {
+    let export_csv_button_callback = {
         let main_state = main_state.clone();
         Callback::from(move |_| {
             if main_state.transfers.len() == 0 {
@@ -101,7 +101,13 @@ pub fn MainWindow() -> Html {
             <div class="dropdown">
                 <button>{"File"}</button>
                 <button onclick={new_button_callback}>{"New"}</button>
-                <button onclick={save_button_callback}>{"Export"}</button>
+                <div class="dropdown-sub">
+                    <button>{"Export"}</button>
+                    <div>
+                        <button onclick={export_csv_button_callback}>{"Export as CSV"}</button>
+                        <button>{"Export as ???"}</button>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="main_container">
