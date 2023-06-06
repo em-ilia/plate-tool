@@ -2,7 +2,7 @@
 
 use uuid::Uuid;
 use wasm_bindgen::JsCast;
-use web_sys::{EventTarget, HtmlDialogElement, HtmlElement};
+use web_sys::{EventTarget, HtmlDialogElement, HtmlElement, HtmlInputElement};
 use yew::prelude::*;
 use yewdux::prelude::*;
 
@@ -210,15 +210,15 @@ struct PlateInfoModalProps {
 
 #[function_component]
 fn PlateInfoModal(props: &PlateInfoModalProps) -> Html {
-    let (state, dispatch) = use_store::<MainState>();
+    let (main_state, main_dispatch) = use_store::<MainState>();
     let dialog_ref = use_node_ref();
 
-    let mut plate = state
+    let mut plate = main_state
         .source_plates
         .iter()
         .find(|spi| spi.get_uuid() == props.id);
     if plate == None {
-        plate = state
+        plate = main_state
             .destination_plates
             .iter()
             .find(|dpi| dpi.get_uuid() == props.id);
@@ -230,6 +230,19 @@ fn PlateInfoModal(props: &PlateInfoModalProps) -> Html {
     let onclose = {
         let dialog_close_callback = props.dialog_close_callback.clone();
         move |_| dialog_close_callback.emit(())
+    };
+
+    let rename_onchange = {
+        let main_dispatch = main_dispatch.clone();
+        let id = props.id;
+        Callback::from(move |e: Event| {
+            log::debug!("Changed name");
+            let input = e.target().expect("Event must have target")
+                .dyn_into::<HtmlInputElement>().unwrap();
+            main_dispatch.reduce_mut(|state| {
+                state.rename_plate(id, &input.value())
+            })
+        })
     };
 
     let delete_onclick = {
@@ -257,9 +270,9 @@ fn PlateInfoModal(props: &PlateInfoModalProps) -> Html {
     }
 
     html! {
-        <dialog ref={dialog_ref} class="dialog" onclose={onclose}>
+        <dialog id="crab" ref={dialog_ref} class="dialog" onclose={onclose}>
             <h2>{"Plate Info"}</h2>
-            <h3>{"Name: "}<input type="text" value={plate_name} /></h3>
+            <h3 id="horse">{"Name: "}<input type="text" id="shrimp" value={plate_name} onchange={rename_onchange}/></h3>
             <button onclick={delete_onclick}>{"Delete"}</button>
         </dialog>
     }
