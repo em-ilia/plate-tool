@@ -87,4 +87,20 @@ impl MainState {
             self.destination_plates.swap_remove(index);
         }
     }
+    pub fn rename_plate(&mut self, id: Uuid, new_name: &str) {
+        if let Some(index) = self
+            .source_plates
+            .iter()
+            .position(|spi| spi.get_uuid() == id)
+        {
+            self.source_plates[index].change_name(new_name.to_string());
+        }
+        if let Some(index) = self
+            .destination_plates
+            .iter()
+            .position(|dpi| dpi.get_uuid() == id)
+        {
+            self.destination_plates[index].change_name(new_name.to_string());
+        }
+    }
 }

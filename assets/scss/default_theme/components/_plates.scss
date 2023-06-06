@@ -43,10 +43,10 @@ td.plate_cell.in_transfer div.plate_cell_inner::after {
 }
 
 div.source_plate td.current_select div.plate_cell_inner {
-	background-image: linear-gradient(lightblue, lightblue);
+	background: lightblue !important;
 }
 div.dest_plate td.current_select div.plate_cell_inner {
-	background: lightcoral;
+	background: lightcoral !important;
 }
 
 

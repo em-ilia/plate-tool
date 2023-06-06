@@ -1,12 +1,16 @@
 #![allow(non_snake_case)]
 
-use std::rc::Rc;
+use std::collections::HashMap;
 use yew::prelude::*;
 use yewdux::prelude::*;
 
-use crate::components::states::CurrentTransfer;
+use crate::components::states::{CurrentTransfer, MainState};
 use crate::data::plate_instances::PlateInstance;
 use crate::data::transfer_region::{Region, TransferRegion};
+
+// Color Palette for the Source Plates, can be changed here
+use crate::components::plates::util::Palettes;
+const PALETTE: super::util::ColorPalette = Palettes::RAINBOW;
 
 use super::super::transfer_menu::RegionDisplay;
 
@@ -18,6 +22,7 @@ pub struct SourcePlateProps {
 
 #[function_component]
 pub fn SourcePlate(props: &SourcePlateProps) -> Html {
+    let (main_state, _) = use_store::<MainState>();
     let (ct_state, ct_dispatch) = use_store::<CurrentTransfer>();
     let m_start_handle: UseStateHandle<Option<(u8, u8)>> = use_state_eq(|| None);
     let m_end_handle: UseStateHandle<Option<(u8, u8)>> = use_state_eq(|| None);
@@ -33,6 +38,20 @@ pub fn SourcePlate(props: &SourcePlateProps) -> Html {
         m_start_handle.set(Some(pt1));
         m_end_handle.set(Some(pt2));
     }
+
+    let mut color_counter: u8 = 0;
+    let color_map = {
+        let ts = main_state.transfers.iter().filter(|t| t.source_id == props.source_plate.get_uuid());
+        let mut color_map: HashMap<(u8,u8), u8> = HashMap::new();
+        for t in ts {
+            color_counter += 1;
+            let sws = t.transfer_region.get_source_wells();
+            for sw in sws {
+                color_map.insert(sw, color_counter);
+            }
+        }
+        color_map
+    };
 
     let source_wells = ct_state.transfer.transfer_region.get_source_wells();
 
@@ -85,6 +104,7 @@ pub fn SourcePlate(props: &SourcePlateProps) -> Html {
                         selected={in_rect(*m_start.clone(), *m_end.clone(), (i,j))}
                         mouse={mouse_callback.clone()}
                         in_transfer={source_wells.contains(&(i,j))}
+                        color={color_map.get(&(i,j)).map(|x| *x).and_then(|y| Some((y,color_counter)))}
                         />
                     }
                 })
@@ -119,6 +139,7 @@ pub struct SourcePlateCellProps {
     selected: bool,
     mouse: Callback<(u8, u8, MouseEventType)>,
     in_transfer: Option<bool>,
+    color: Option<(u8,u8)>,
 }
 #[derive(Debug)]
 pub enum MouseEventType {
@@ -136,19 +157,25 @@ fn SourcePlateCell(props: &SourcePlateCellProps) -> Html {
         Some(true) => Some("in_transfer"),
         _ => None,
     };
+    let color = match props.color {
+        Some(num) => PALETTE.get_u8(num.0,num.1),
+        None => [255.0,255.0,255.0]
+    };
     let mouse = Callback::clone(&props.mouse);
     let mouse2 = Callback::clone(&props.mouse);
     let (i, j) = (props.i.clone(), props.j.clone());
 
     html! {
         <td class={classes!("plate_cell", selected_class, in_transfer_class)}
+            id={format!("color={:?}", props.color)}
             onmousedown={move |_| {
                 mouse.emit((i,j, MouseEventType::MOUSEDOWN))
             }}
             onmouseenter={move |_| {
                 mouse2.emit((i,j, MouseEventType::MOUSEENTER))
             }}>
-            <div class="plate_cell_inner" />
+            <div class="plate_cell_inner" 
+            style={format!("background: rgba({},{},{},1);", color[0], color[1], color[2])}/>
         </td>
     }
 }
