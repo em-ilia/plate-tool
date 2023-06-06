@@ -4,6 +4,9 @@
 dialog {
 	border: 3px solid $color-dark;
 	border-radius: 2%;
+
+	color: $color-dark;
+	background: $color-white;
 }
 
 dialog > form[method="dialog"] {
@@ -13,10 +16,11 @@ dialog > form[method="dialog"] {
 	line-height: 0px;
 
 	button {
-		padding-top: 5px;
+		padding-top: 6px;
 		padding-left: 3px;
-		font-size: 140%;
+		font-size: 150%;
 		line-height: 0px;
+		color: $color-dark;
 
 		border: 0;
 		background: transparent;
@@ -24,6 +28,10 @@ dialog > form[method="dialog"] {
 			text-align: center;
 			vertical-align: middle;
 			content: "\00d7"; // Nicer X
+		}
+		&:hover {
+			color: black;
+			transition: color 0.1s;
 		}
 	}
 }
