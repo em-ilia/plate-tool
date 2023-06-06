@@ -270,10 +270,11 @@ fn PlateInfoModal(props: &PlateInfoModalProps) -> Html {
     }
 
     html! {
-        <dialog id="crab" ref={dialog_ref} class="dialog" onclose={onclose}>
+        <dialog ref={dialog_ref} class="dialog" onclose={onclose}>
             <h2>{"Plate Info"}</h2>
-            <h3 id="horse">{"Name: "}<input type="text" id="shrimp" value={plate_name} onchange={rename_onchange}/></h3>
+            <h3>{"Name: "}<input type="text" value={plate_name} onchange={rename_onchange}/></h3>
             <button onclick={delete_onclick}>{"Delete"}</button>
+            <form class="modal_close" method="dialog"><button /></form>
         </dialog>
     }
 }

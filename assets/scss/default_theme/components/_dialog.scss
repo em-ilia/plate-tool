@@ -1,0 +1,29 @@
+@use "sass:color";
+@use "../variables" as *;
+
+dialog {
+	border: 3px solid $color-dark;
+	border-radius: 2%;
+}
+
+dialog > form[method="dialog"] {
+	position: absolute;
+	top: 0;
+	right: 0;
+	line-height: 0px;
+
+	button {
+		padding-top: 5px;
+		padding-left: 3px;
+		font-size: 140%;
+		line-height: 0px;
+
+		border: 0;
+		background: transparent;
+		&::before {
+			text-align: center;
+			vertical-align: middle;
+			content: "\00d7"; // Nicer X
+		}
+	}
+}

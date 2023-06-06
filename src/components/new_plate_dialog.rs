@@ -99,6 +99,7 @@ pub fn NewPlateDialog(props: &NewPlateDialogProps) -> Html {
             <label for="npt_dest">{"Destination"}</label>
             <input type="submit" name="new_plate_button" value="Create" />
             </form>
+            <form class="modal_close" method="dialog"><button /></form>
         </dialog>
     }
 }
