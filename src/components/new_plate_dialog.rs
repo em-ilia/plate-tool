@@ -60,6 +60,13 @@ pub fn NewPlateDialog(props: &NewPlateDialogProps) -> Html {
         })
     };
 
+    let onclose = {
+        let close_callback = props.close_callback.clone();
+        Callback::from(move |e: Event| {
+            close_callback.emit(());
+        })
+    };
+
     // This whole section is optional, only if you want the backdrop
     let dialog_ref = use_node_ref();
     {
@@ -78,7 +85,7 @@ pub fn NewPlateDialog(props: &NewPlateDialogProps) -> Html {
     }
 
     html! {
-        <dialog ref={dialog_ref} class="dialog new_plate_dialog">
+        <dialog ref={dialog_ref} class="dialog new_plate_dialog" onclose={onclose}>
             <h2>{"Create a plate:"}</h2>
             <form onsubmit={new_plate_callback}>
             <input type="text" name="new_plate_name" placeholder="Name"/>
