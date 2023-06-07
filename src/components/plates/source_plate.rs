@@ -41,8 +41,11 @@ pub fn SourcePlate(props: &SourcePlateProps) -> Html {
 
     let mut color_counter: u8 = 0;
     let color_map = {
-        let ts = main_state.transfers.iter().filter(|t| t.source_id == props.source_plate.get_uuid());
-        let mut color_map: HashMap<(u8,u8), u8> = HashMap::new();
+        let ts = main_state
+            .transfers
+            .iter()
+            .filter(|t| t.source_id == props.source_plate.get_uuid());
+        let mut color_map: HashMap<(u8, u8), u8> = HashMap::new();
         for t in ts {
             color_counter += 1;
             let sws = t.transfer_region.get_source_wells();
@@ -139,7 +142,7 @@ pub struct SourcePlateCellProps {
     selected: bool,
     mouse: Callback<(u8, u8, MouseEventType)>,
     in_transfer: Option<bool>,
-    color: Option<(u8,u8)>,
+    color: Option<(u8, u8)>,
 }
 #[derive(Debug)]
 pub enum MouseEventType {
@@ -158,8 +161,8 @@ fn SourcePlateCell(props: &SourcePlateCellProps) -> Html {
         _ => None,
     };
     let color = match props.color {
-        Some(num) => PALETTE.get_u8(num.0,num.1),
-        None => [255.0,255.0,255.0]
+        Some(num) => PALETTE.get_u8(num.0, num.1),
+        None => [255.0, 255.0, 255.0],
     };
     let mouse = Callback::clone(&props.mouse);
     let mouse2 = Callback::clone(&props.mouse);
@@ -174,7 +177,7 @@ fn SourcePlateCell(props: &SourcePlateCellProps) -> Html {
             onmouseenter={move |_| {
                 mouse2.emit((i,j, MouseEventType::MOUSEENTER))
             }}>
-            <div class="plate_cell_inner" 
+            <div class="plate_cell_inner"
             style={format!("background: rgba({},{},{},1);", color[0], color[1], color[2])}/>
         </td>
     }

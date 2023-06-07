@@ -104,9 +104,11 @@ pub fn Tree(props: &TreeProps) -> Html {
             if let Some(li) = li {
                 if let Ok(id) = u128::from_str_radix(li.id().as_str(), 10) {
                     let id = Uuid::from_u128(id);
-                    if let Some(transfer) = main_state.transfers
-                                            .iter().find(|transfer| transfer.get_uuid() == id) {
-
+                    if let Some(transfer) = main_state
+                        .transfers
+                        .iter()
+                        .find(|transfer| transfer.get_uuid() == id)
+                    {
                         main_dispatch.reduce_mut(|state| {
                             state.selected_source_plate = transfer.source_id;
                             state.selected_dest_plate = transfer.dest_id;
@@ -237,11 +239,12 @@ fn PlateInfoModal(props: &PlateInfoModalProps) -> Html {
         let id = props.id;
         Callback::from(move |e: Event| {
             log::debug!("Changed name");
-            let input = e.target().expect("Event must have target")
-                .dyn_into::<HtmlInputElement>().unwrap();
-            main_dispatch.reduce_mut(|state| {
-                state.rename_plate(id, &input.value())
-            })
+            let input = e
+                .target()
+                .expect("Event must have target")
+                .dyn_into::<HtmlInputElement>()
+                .unwrap();
+            main_dispatch.reduce_mut(|state| state.rename_plate(id, &input.value()))
         })
     };
 

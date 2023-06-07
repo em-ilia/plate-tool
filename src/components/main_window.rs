@@ -1,9 +1,9 @@
 #![allow(non_snake_case)]
+use js_sys::Array;
+use wasm_bindgen::{prelude::*, JsCast, JsValue};
+use web_sys::{Blob, HtmlAnchorElement, HtmlDialogElement, HtmlFormElement, HtmlInputElement, Url};
 use yew::prelude::*;
 use yewdux::prelude::*;
-use wasm_bindgen::{JsValue, JsCast, prelude::*};
-use web_sys::{Blob, Url, HtmlAnchorElement, HtmlDialogElement, HtmlInputElement, HtmlFormElement};
-use js_sys::Array;
 
 use super::new_plate_dialog::NewPlateDialog;
 use super::plates::plate_container::PlateContainer;
@@ -11,8 +11,8 @@ use super::states::{CurrentTransfer, MainState};
 use super::transfer_menu::TransferMenu;
 use super::tree::Tree;
 
-use crate::data::plate_instances::PlateInstance;
 use crate::data::csv::state_to_csv;
+use crate::data::plate_instances::PlateInstance;
 
 #[function_component]
 pub fn MainWindow() -> Html {
@@ -59,7 +59,8 @@ pub fn MainWindow() -> Html {
         let ct_dispatch = ct_dispatch.clone();
         Callback::from(move |_| {
             let window = web_sys::window().unwrap();
-            let confirm = window.confirm_with_message("This will reset all plates and transfers. Proceed?");
+            let confirm =
+                window.confirm_with_message("This will reset all plates and transfers. Proceed?");
             if let Ok(confirm) = confirm {
                 if confirm {
                     main_dispatch.set(MainState::default());
@@ -73,8 +74,11 @@ pub fn MainWindow() -> Html {
         let main_state = main_state.clone();
         Callback::from(move |_| {
             if main_state.transfers.len() == 0 {
-                web_sys::window().unwrap().alert_with_message("No transfers to export.").unwrap();
-                return ()
+                web_sys::window()
+                    .unwrap()
+                    .alert_with_message("No transfers to export.")
+                    .unwrap();
+                return ();
             }
             web_sys::window().unwrap().alert_with_message("CSV export is currently not importable. Export as JSON if you'd like to back up your work!").unwrap();
             if let Ok(csv) = state_to_csv(&main_state) {
@@ -89,7 +93,10 @@ pub fn MainWindow() -> Html {
             if let Ok(json) = serde_json::to_string(&main_state) {
                 save_str(&json, "plate-tool-state.json");
             } else {
-                web_sys::window().unwrap().alert_with_message("Failed to export.").unwrap();
+                web_sys::window()
+                    .unwrap()
+                    .alert_with_message("Failed to export.")
+                    .unwrap();
             }
         })
     };
@@ -100,7 +107,11 @@ pub fn MainWindow() -> Html {
             let window = web_sys::window().unwrap();
             let document = window.document().unwrap();
             let body = document.body().unwrap();
-            let modal = document.create_element("dialog").unwrap().dyn_into::<HtmlDialogElement>().unwrap();
+            let modal = document
+                .create_element("dialog")
+                .unwrap()
+                .dyn_into::<HtmlDialogElement>()
+                .unwrap();
             modal.set_text_content(Some("Import File:"));
             let onclose_callback = {
                 let modal = modal.clone();
@@ -111,8 +122,16 @@ pub fn MainWindow() -> Html {
             modal.set_onclose(Some(&onclose_callback.as_ref().unchecked_ref()));
             onclose_callback.forget();
 
-            let form = document.create_element("form").unwrap().dyn_into::<HtmlFormElement>().unwrap();
-            let input = document.create_element("input").unwrap().dyn_into::<HtmlInputElement>().unwrap();
+            let form = document
+                .create_element("form")
+                .unwrap()
+                .dyn_into::<HtmlFormElement>()
+                .unwrap();
+            let input = document
+                .create_element("input")
+                .unwrap()
+                .dyn_into::<HtmlInputElement>()
+                .unwrap();
             input.set_type("file");
             input.set_accept(".json");
             form.append_child(&input).unwrap();
@@ -121,33 +140,38 @@ pub fn MainWindow() -> Html {
                 let main_dispatch = main_dispatch.clone();
                 let modal = modal.clone();
                 Closure::<dyn FnMut(_)>::new(move |e: Event| {
-                if let Some(input) = e.current_target() {
-                    let input = input.dyn_into::<HtmlInputElement>().expect("We know this is an input.");
-                    if let Some(files) = input.files() {
-                        if let Some(file) = files.get(0) {
-                            let fr = web_sys::FileReader::new().unwrap();
-                            fr.read_as_text(&file).unwrap();
-                            let fr1 = fr.clone(); // Clone to avoid outliving closure
-                            let main_dispatch = main_dispatch.clone(); // Clone to satisfy FnMut
-                                                                       // trait
-                            let modal = modal.clone();
-                            let onload = Closure::<dyn FnMut(_)>::new(move |e: Event| {
-                                log::debug!("{:?}",&fr1.result());
-                                if let Some(value) = &fr1.result().ok().and_then(|v| v.as_string()) {
-                                    let ms = serde_json::from_str::<MainState>(value);
-                                    match ms {
-                                        Ok(ms) => main_dispatch.set(ms),
-                                        Err(e) => log::debug!("{:?}", e),
-                                    };
-                                    modal.close();
-                                }
-                            });
-                            fr.set_onload(Some(&onload.as_ref().unchecked_ref()));
-                            onload.forget(); // Magic (don't touch)
+                    if let Some(input) = e.current_target() {
+                        let input = input
+                            .dyn_into::<HtmlInputElement>()
+                            .expect("We know this is an input.");
+                        if let Some(files) = input.files() {
+                            if let Some(file) = files.get(0) {
+                                let fr = web_sys::FileReader::new().unwrap();
+                                fr.read_as_text(&file).unwrap();
+                                let fr1 = fr.clone(); // Clone to avoid outliving closure
+                                let main_dispatch = main_dispatch.clone(); // Clone to satisfy FnMut
+                                                                           // trait
+                                let modal = modal.clone();
+                                let onload = Closure::<dyn FnMut(_)>::new(move |e: Event| {
+                                    log::debug!("{:?}", &fr1.result());
+                                    if let Some(value) =
+                                        &fr1.result().ok().and_then(|v| v.as_string())
+                                    {
+                                        let ms = serde_json::from_str::<MainState>(value);
+                                        match ms {
+                                            Ok(ms) => main_dispatch.set(ms),
+                                            Err(e) => log::debug!("{:?}", e),
+                                        };
+                                        modal.close();
+                                    }
+                                });
+                                fr.set_onload(Some(&onload.as_ref().unchecked_ref()));
+                                onload.forget(); // Magic (don't touch)
+                            }
                         }
                     }
-                }
-            })};
+                })
+            };
             input.set_onchange(Some(&input_callback.as_ref().unchecked_ref()));
             input_callback.forget(); // Magic straight from the docs, don't touch :(
 
@@ -187,15 +211,18 @@ pub fn MainWindow() -> Html {
 }
 
 fn save_str(data: &str, name: &str) {
-    let blob = Blob::new_with_str_sequence(
-                    &Array::from_iter(std::iter::once(JsValue::from_str(data))));
+    let blob =
+        Blob::new_with_str_sequence(&Array::from_iter(std::iter::once(JsValue::from_str(data))));
     if let Ok(blob) = blob {
         let url = Url::create_object_url_with_blob(&blob).expect("We have a blob, why not URL?");
         // Beneath is the cool hack to download files
         let window = web_sys::window().unwrap();
         let document = window.document().unwrap();
-        let anchor = document.create_element("a").unwrap()
-                             .dyn_into::<HtmlAnchorElement>().unwrap();
+        let anchor = document
+            .create_element("a")
+            .unwrap()
+            .dyn_into::<HtmlAnchorElement>()
+            .unwrap();
         anchor.set_download(name);
         anchor.set_href(&url);
         anchor.click();

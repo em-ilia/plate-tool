@@ -3,9 +3,9 @@
 use lazy_static::lazy_static;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 use wasm_bindgen::JsCast;
 use web_sys::{EventTarget, HtmlInputElement};
-use uuid::Uuid;
 use yew::prelude::*;
 use yewdux::prelude::*;
 
@@ -28,10 +28,9 @@ pub fn TransferMenu() -> Html {
                 ct_dispatch.reduce_mut(|state| {
                     state.transfer.name = input.value().clone();
                 });
-                }
             }
-
-    )};
+        })
+    };
 
     let on_src_region_change = {
         let ct_dispatch = ct_dispatch.clone();
@@ -174,19 +173,24 @@ pub fn TransferMenu() -> Html {
                             spi.clone(),
                             dpi.clone(),
                             ct_state.transfer.transfer_region,
-                            ct_state.transfer.name.clone()
+                            ct_state.transfer.name.clone(),
                         );
                         main_dispatch.reduce_mut(|state| {
                             state.transfers.push(new_transfer);
-                            state.selected_transfer = state.transfers.last()
-                                                        .expect("An element should have just been added")
-                                                        .get_uuid();
+                            state.selected_transfer = state
+                                .transfers
+                                .last()
+                                .expect("An element should have just been added")
+                                .get_uuid();
                         });
                     }
                 }
             } else {
-                if let Some(index) = main_state.transfers.iter()
-                                        .position(|t| t.get_uuid() == main_state.selected_transfer) {
+                if let Some(index) = main_state
+                    .transfers
+                    .iter()
+                    .position(|t| t.get_uuid() == main_state.selected_transfer)
+                {
                     main_dispatch.reduce_mut(|state| {
                         state.transfers[index] = ct_state.transfer.clone();
                     });
@@ -205,8 +209,11 @@ pub fn TransferMenu() -> Html {
             if main_state.selected_transfer.is_nil() {
                 () // Maybe reset transfer?
             } else {
-                if let Some(index) = main_state.transfers.iter()
-                                     .position(|t| t.get_uuid() == ct_state.transfer.get_uuid()) {
+                if let Some(index) = main_state
+                    .transfers
+                    .iter()
+                    .position(|t| t.get_uuid() == ct_state.transfer.get_uuid())
+                {
                     main_dispatch.reduce_mut(|state| {
                         state.transfers.remove(index);
                         state.selected_transfer = Uuid::nil();

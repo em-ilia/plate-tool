@@ -1,9 +1,9 @@
-use crate::data::transfer::Transfer;
-use crate::components::transfer_menu::num_to_letters;
 use crate::components::states::MainState;
+use crate::components::transfer_menu::num_to_letters;
+use crate::data::transfer::Transfer;
 
-use std::{error::Error};
 use serde::Serialize;
+use std::error::Error;
 
 #[derive(Serialize, Debug)]
 struct TransferRecord {
@@ -24,13 +24,23 @@ struct TransferRecord {
 pub fn state_to_csv(state: &MainState) -> Result<String, Box<dyn Error>> {
     let mut records: Vec<TransferRecord> = Vec::new();
     for transfer in &state.transfers {
-        let src_barcode = state.source_plates.iter().find(|spi| spi.get_uuid() == transfer.source_id)
-                                             .ok_or("Found unpurged transfer")?;
-        let dest_barcode = state.destination_plates.iter().find(|dpi| dpi.get_uuid() == transfer.dest_id)
-                                             .ok_or("Found unpurged transfer")?;
-        records.append(&mut transfer_to_records(transfer, &src_barcode.name, &dest_barcode.name))
+        let src_barcode = state
+            .source_plates
+            .iter()
+            .find(|spi| spi.get_uuid() == transfer.source_id)
+            .ok_or("Found unpurged transfer")?;
+        let dest_barcode = state
+            .destination_plates
+            .iter()
+            .find(|dpi| dpi.get_uuid() == transfer.dest_id)
+            .ok_or("Found unpurged transfer")?;
+        records.append(&mut transfer_to_records(
+            transfer,
+            &src_barcode.name,
+            &dest_barcode.name,
+        ))
     }
-    return records_to_csv(records)
+    return records_to_csv(records);
 }
 
 fn transfer_to_records(
@@ -47,17 +57,18 @@ fn transfer_to_records(
         let dest_wells = map(s_well);
         if let Some(dest_wells) = dest_wells {
             for d_well in dest_wells {
-                records.push(TransferRecord { 
+                records.push(TransferRecord {
                     source_plate: src_barcode.to_string(),
                     source_well: format!("{}{}", num_to_letters(s_well.0).unwrap(), s_well.1),
                     destination_plate: dest_barcode.to_string(),
                     destination_well: format!("{}{}", num_to_letters(d_well.0).unwrap(), d_well.1),
                     volume: 2.5, // Default value since not yet implemented
-                    concentration: None })
+                    concentration: None,
+                })
             }
         }
     }
-    return records
+    return records;
 }
 
 fn records_to_csv(trs: Vec<TransferRecord>) -> Result<String, Box<dyn Error>> {
@@ -66,5 +77,5 @@ fn records_to_csv(trs: Vec<TransferRecord>) -> Result<String, Box<dyn Error>> {
         wtr.serialize(record)?
     }
     let data = String::from_utf8(wtr.into_inner()?)?;
-    return Ok(data)
+    return Ok(data);
 }

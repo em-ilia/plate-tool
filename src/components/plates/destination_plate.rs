@@ -61,8 +61,11 @@ pub fn DestinationPlate(props: &DestinationPlateProps) -> Html {
 
     let mut color_counter: u8 = 0;
     let color_map = {
-        let ts = main_state.transfers.iter().filter(|t| t.dest_id == props.destination_plate.get_uuid());
-        let mut color_map: HashMap<(u8,u8), u8> = HashMap::new();
+        let ts = main_state
+            .transfers
+            .iter()
+            .filter(|t| t.dest_id == props.destination_plate.get_uuid());
+        let mut color_map: HashMap<(u8, u8), u8> = HashMap::new();
         for t in ts {
             color_counter += 1;
             let dws = t.transfer_region.get_destination_wells();
@@ -142,7 +145,7 @@ pub struct DestPlateCellProps {
     pub selected: bool,
     pub mouse: Callback<(u8, u8, MouseEventType)>,
     pub in_transfer: Option<bool>,
-    color: Option<(u8,u8)>,
+    color: Option<(u8, u8)>,
 }
 
 #[function_component]
@@ -156,8 +159,8 @@ fn DestPlateCell(props: &DestPlateCellProps) -> Html {
         _ => None,
     };
     let color = match props.color {
-        Some(num) => PALETTE.get_u8(num.0,num.1),
-        None => [255.0,255.0,255.0]
+        Some(num) => PALETTE.get_u8(num.0, num.1),
+        None => [255.0, 255.0, 255.0],
     };
     let mouse = Callback::clone(&props.mouse);
     let mouse2 = Callback::clone(&props.mouse);
