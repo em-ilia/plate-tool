@@ -511,9 +511,44 @@ mod tests {
             Some(vec! {(5, 2), (5, 8), (11, 2), (11, 8)}),
             "Failed type replicate 1"
         );
+
+        let transfer2 = TransferRegion {
+            source_plate: Plate::new(PlateType::Source, PlateFormat::W384),
+            dest_plate: Plate::new(PlateType::Destination, PlateFormat::W384),
+            source_region: Region::Rect((1,1), (2,3)),
+            dest_region: Region::Rect((2,2), (11,16)),
+            interleave_source: (1, 1),
+            interleave_dest: (2, 2),
+        };
+        let transfer2_source = transfer2.get_source_wells();
+        let transfer2_dest = transfer2.get_destination_wells();
+        assert_eq!(transfer2_source, vec![(1,1),(1,2),(1,3),(2,1),(2,2),(2,3)], "Failed type replicate 2 source");
+        assert_eq!(transfer2_dest,
+            vec![(2,2),(2,8),(6,2),(6,8),(2,4),(2,10),(6,4),(6,10),(2,6),(2,12),(6,6),(6,12),
+                 (4,2),(4,8),(8,2),(8,8),(4,4),(4,10),(8,4),(8,10),(4,6),(4,12),(8,6),(8,12)],
+            "Failed type replicate 2 destination");
+
     }
 
     #[test]
     #[wasm_bindgen_test]
-    fn test_pooling_transfer() {}
+    fn test_pooling_transfer() {
+        let transfer1 = TransferRegion {
+            source_plate: Plate::new(PlateType::Source, PlateFormat::W384),
+            dest_plate: Plate::new(PlateType::Destination, PlateFormat::W384),
+            source_region: Region::Rect((1,4),(3,7)),
+            dest_region: Region::Point((1,9)),
+            interleave_source: (1, 1),
+            interleave_dest: (0, 2),
+        };
+        //let transfer1_source = transfer1.get_source_wells();
+        let mut transfer1_dest = transfer1.get_destination_wells();
+        transfer1_dest.sort();
+        transfer1_dest.dedup(); // Makes our check easier, otherwise we have repeated wells
+        let transfer1_map = transfer1.calculate_map();
+        // Skipping source check---it's just 12 wells.
+        assert_eq!(transfer1_dest, vec![(1,9),(1,11),(1,13),(1,15)], "Failed type pool 1 dest");
+        assert_eq!(transfer1_map((2,6)), Some(vec![(1,13)]), "Failed type pool 1 map 1");
+        assert_eq!(transfer1_map((3,7)), Some(vec![(1,15)]), "Failed type pool 1 map 2");
+    }
 }
