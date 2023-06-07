@@ -134,6 +134,20 @@ pub fn TransferMenu() -> Html {
         })
     };
 
+    let on_volume_change = {
+        let ct_dispatch = ct_dispatch.clone();
+        
+        Callback::from(move |e: Event| {
+            let input = e.target().expect("Event must have target")
+                        .dyn_into::<HtmlInputElement>().ok().expect("Must have been emitted by input");
+            if let Ok(num) = input.value().parse::<f32>() {
+                ct_dispatch.reduce_mut(|state| {
+                    state.transfer.volume = num;
+                });
+            }
+        })
+    };
+
     let new_transfer_button_callback = {
         let main_dispatch = main_dispatch.clone();
         let main_state = main_state.clone();
@@ -266,6 +280,13 @@ pub fn TransferMenu() -> Html {
             <input type="number" name="dest_interleave_y"
             onchange={on_dest_interleave_y_change}
             value={ct_state.transfer.transfer_region.interleave_dest.1.to_string()}/>
+            </div>
+            <div>
+            <label for="volume"><h3>{"Volume"}</h3></label>
+            <input type="number" name="volume" class="volume_input"
+            min="0" step="0.1"
+            onchange={on_volume_change}
+            value={ct_state.transfer.volume.to_string()}/>
             </div>
             <div id="controls">
             <input type="button" name="new_transfer" onclick={new_transfer_button_callback}

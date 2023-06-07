@@ -58,4 +58,7 @@ input {
 	&[type="number"] {
 		width: 2em;
 	}
+	&.volume_input {
+		width: 4em;
+	}
 }

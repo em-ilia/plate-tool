@@ -9,11 +9,13 @@ use crate::data::transfer::Transfer;
 
 #[derive(Debug, Default, Clone, PartialEq, Serialize, Deserialize, Store)]
 #[store(storage = "session")]
+#[non_exhaustive]
 pub struct CurrentTransfer {
     pub transfer: Transfer,
 }
 
 #[derive(Default, PartialEq, Clone, Serialize, Deserialize)]
+#[non_exhaustive]
 pub struct MainState {
     pub source_plates: Vec<PlateInstance>,
     pub destination_plates: Vec<PlateInstance>,

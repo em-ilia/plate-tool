@@ -16,9 +16,9 @@ struct TransferRecord {
     #[serde(rename = "Destination Well")]
     destination_well: String,
     #[serde(rename = "Volume")]
-    volume: f64,
+    volume: f32,
     #[serde(rename = "Concentration")]
-    concentration: Option<f64>,
+    concentration: Option<f32>,
 }
 
 pub fn state_to_csv(state: &MainState) -> Result<String, Box<dyn Error>> {
@@ -62,7 +62,7 @@ fn transfer_to_records(
                     source_well: format!("{}{}", num_to_letters(s_well.0).unwrap(), s_well.1),
                     destination_plate: dest_barcode.to_string(),
                     destination_well: format!("{}{}", num_to_letters(d_well.0).unwrap(), d_well.1),
-                    volume: 2.5, // Default value since not yet implemented
+                    volume: tr.volume,
                     concentration: None,
                 })
             }
