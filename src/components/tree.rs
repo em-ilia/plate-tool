@@ -7,7 +7,6 @@ use yew::prelude::*;
 use yewdux::prelude::*;
 
 use crate::components::states::{CurrentTransfer, MainState};
-use crate::components::transfer_menu::RegionDisplay;
 use crate::data::transfer_region::Region;
 
 #[derive(PartialEq, Properties)]
@@ -18,7 +17,7 @@ pub struct TreeProps {
 #[function_component]
 pub fn Tree(props: &TreeProps) -> Html {
     let (main_state, main_dispatch) = use_store::<MainState>();
-    let (ct_state, ct_dispatch) = use_store::<CurrentTransfer>();
+    let (_, ct_dispatch) = use_store::<CurrentTransfer>();
     let plate_modal_id: UseStateHandle<Option<Uuid>> = use_state(|| None);
 
     let open_plate_info_callback = {

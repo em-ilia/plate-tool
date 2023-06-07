@@ -17,7 +17,7 @@ use crate::data::plate_instances::PlateInstance;
 #[function_component]
 pub fn MainWindow() -> Html {
     let (main_state, main_dispatch) = use_store::<MainState>();
-    let (ct_state, ct_dispatch) = use_store::<CurrentTransfer>();
+    let (_, ct_dispatch) = use_store::<CurrentTransfer>();
 
     let source_plate_instance: Option<PlateInstance> = main_state
         .source_plates
@@ -152,8 +152,7 @@ pub fn MainWindow() -> Html {
                                 let main_dispatch = main_dispatch.clone(); // Clone to satisfy FnMut
                                                                            // trait
                                 let modal = modal.clone();
-                                let onload = Closure::<dyn FnMut(_)>::new(move |e: Event| {
-                                    log::debug!("{:?}", &fr1.result());
+                                let onload = Closure::<dyn FnMut(_)>::new(move |_: Event| {
                                     if let Some(value) =
                                         &fr1.result().ok().and_then(|v| v.as_string())
                                     {

@@ -6,7 +6,7 @@ use yewdux::prelude::*;
 
 use crate::components::states::{CurrentTransfer, MainState};
 use crate::data::plate_instances::PlateInstance;
-use crate::data::transfer_region::{Region, TransferRegion};
+use crate::data::transfer_region::Region;
 
 // Color Palette for the Source Plates, can be changed here
 use crate::components::plates::util::Palettes;

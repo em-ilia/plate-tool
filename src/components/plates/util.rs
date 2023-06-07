@@ -11,7 +11,7 @@ pub struct ColorPalette {
 }
 
 impl ColorPalette {
-    pub fn new(a: [f64; 3], b: [f64; 3], c: [f64; 3], d: [f64; 3]) -> Self {
+    pub fn _new(a: [f64; 3], b: [f64; 3], c: [f64; 3], d: [f64; 3]) -> Self {
         ColorPalette { a, b, c, d }
     }
 

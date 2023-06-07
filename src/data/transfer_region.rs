@@ -165,11 +165,6 @@ impl TransferRegion {
                             (s_dims.1 + il_source.1.abs() as u8 - 1)
                                 .div_euclid(il_source.1.abs() as u8),
                         );
-                        let D_per_replicate = (
-                            // How many wells are used per replicate?
-                            (N_s.0 * (il_dest.0.abs() as u8)),
-                            (N_s.1 * (il_dest.1.abs() as u8)),
-                        );
                         let count = (
                             // How many times can we replicate?
                             (1..)
@@ -191,7 +186,6 @@ impl TransferRegion {
                         let j = j
                             .saturating_sub(s_ul.1)
                             .saturating_div(il_source.1.abs() as u8);
-                        // log::debug!("N_s: {:?}, d_dims: {:?}, D_per: {:?}, count: {:?}", N_s, d_dims, D_per_replicate, count);
 
                         Some(
                             possible_destination_wells
@@ -259,40 +253,6 @@ impl TransferRegion {
                     // log::debug!("s1.1: {}, max.1: {}", s1.1, source_max.1);
                     return Err("Source region is out-of-bounds! (Too wide)");
                 }
-                // Check that source lengths divide destination lengths
-                /* This section is disabled because it's not
-                 * strictly necessary to have this property (divisibility)
-                match &self.dest_region {
-                    Region::Point(_) => (),
-                    Region::Rect(d1, d2) => {
-                        // If we consider interleaves, it's slightly more
-                        // complicated to compute the true dimensions of
-                        // each region.
-                        // (dim)*(il) - (il - 1)
-                        let dest_dim_i = u8::abs_diff(d1.0, d2.0)+1;
-                        let dest_dim_j = u8::abs_diff(d1.1, d2.1)+1;
-                        let source_dim_i = ((il_source.0.abs() as u8) * u8::abs_diff(s1.0, s2.0))
-                            .checked_sub(il_source.0.abs() as u8 - 1)
-                            .expect("Dimension is somehow negative?")
-                            + 1;
-                        let source_dim_j = ((il_source.1.abs() as u8) * u8::abs_diff(s1.1, s2.1))
-                            .checked_sub(il_source.1.abs() as u8 - 1)
-                            .expect("Dimension is somehow negative?")
-                            + 1;
-
-                        if dest_dim_i % (source_dim_i+il_dest.0.abs() as u8) != 0 {
-                            eprintln!("{} % {} = {}", dest_dim_i,
-                                source_dim_i+il_dest.0.abs() as u8,
-                                dest_dim_i % (source_dim_i+il_dest.0.abs() as u8));
-                            return Err("Replicate region has indivisible height!");
-                        }
-                        if dest_dim_j % (source_dim_j+il_dest.1.abs() as u8) != 0 {
-                            eprintln!("{} {}", source_dim_j, source_dim_j);
-                            return Err("Replicate region has indivisible width!");
-                        }
-                    }
-                }
-                */
             }
         }
 
@@ -306,18 +266,6 @@ impl TransferRegion {
         // we'd get a nasty recursive loop.
 
         return Ok(());
-    }
-}
-
-fn in_region(pt: (u8, u8), r: &Region) -> bool {
-    match r {
-        Region::Rect(c1, c2) => {
-            pt.0 <= u8::max(c1.0, c2.0)
-                && pt.0 >= u8::min(c1.0, c2.0)
-                && pt.1 <= u8::max(c1.1, c2.1)
-                && pt.1 >= u8::min(c1.1, c2.1)
-        }
-        Region::Point((i, j)) => pt.0 == *i && pt.1 == *j,
     }
 }
 

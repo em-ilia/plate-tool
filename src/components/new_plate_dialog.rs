@@ -6,7 +6,7 @@ use web_sys::{EventTarget, FormData, HtmlDialogElement, HtmlFormElement};
 
 use crate::components::states::MainState;
 use crate::data::plate::*;
-use crate::data::{plate_instances::PlateInstance, transfer::Transfer};
+use crate::data::plate_instances::PlateInstance;
 
 #[derive(PartialEq, Properties)]
 pub struct NewPlateDialogProps {
@@ -15,7 +15,7 @@ pub struct NewPlateDialogProps {
 
 #[function_component]
 pub fn NewPlateDialog(props: &NewPlateDialogProps) -> Html {
-    let (state, dispatch) = use_store::<MainState>();
+    let (_, dispatch) = use_store::<MainState>();
 
     let new_plate_callback = {
         let dispatch = dispatch.clone();
@@ -62,7 +62,7 @@ pub fn NewPlateDialog(props: &NewPlateDialogProps) -> Html {
 
     let onclose = {
         let close_callback = props.close_callback.clone();
-        Callback::from(move |e: Event| {
+        Callback::from(move |_: Event| {
             close_callback.emit(());
         })
     };

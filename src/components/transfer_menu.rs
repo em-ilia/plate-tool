@@ -136,10 +136,14 @@ pub fn TransferMenu() -> Html {
 
     let on_volume_change = {
         let ct_dispatch = ct_dispatch.clone();
-        
+
         Callback::from(move |e: Event| {
-            let input = e.target().expect("Event must have target")
-                        .dyn_into::<HtmlInputElement>().ok().expect("Must have been emitted by input");
+            let input = e
+                .target()
+                .expect("Event must have target")
+                .dyn_into::<HtmlInputElement>()
+                .ok()
+                .expect("Must have been emitted by input");
             if let Ok(num) = input.value().parse::<f32>() {
                 ct_dispatch.reduce_mut(|state| {
                     state.transfer.volume = num;

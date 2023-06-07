@@ -2,7 +2,6 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use yewdux::{prelude::*, storage};
 
-use super::transfer_menu::RegionDisplay;
 use crate::data::plate::*;
 use crate::data::plate_instances::PlateInstance;
 use crate::data::transfer::Transfer;
@@ -32,13 +31,6 @@ impl Store for MainState {
         storage::load(storage::Area::Local)
             .expect("Unable to load state")
             .unwrap_or_default()
-        /*
-        Self {
-            source_plates: Vec::new(),
-            destination_plates: Vec::new(),
-            transfers: Vec::new(),
-        }
-        */
     }
 
     fn should_notify(&self, old: &Self) -> bool {
@@ -47,7 +39,7 @@ impl Store for MainState {
 }
 
 impl MainState {
-    pub fn purge_transfers(&mut self) {
+    pub fn _purge_transfers(&mut self) {
         // Removes any transfers for which the associated plates are gone
         self.transfers = self
             .transfers
