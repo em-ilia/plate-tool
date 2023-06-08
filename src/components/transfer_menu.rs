@@ -40,7 +40,7 @@ pub fn TransferMenu() -> Html {
             let target: Option<EventTarget> = e.target();
             let input = target.and_then(|t| t.dyn_into::<HtmlInputElement>().ok());
             if let Some(input) = input {
-                if let Ok(rd) = RegionDisplay::try_from(input.value()) {
+                if let Ok(rd) = RegionDisplay::try_from(input.value().to_uppercase()) {
                     ct_dispatch.reduce_mut(|state| {
                         state.transfer.transfer_region.source_region = Region::from(&rd);
                     });
@@ -58,7 +58,7 @@ pub fn TransferMenu() -> Html {
             let target: Option<EventTarget> = e.target();
             let input = target.and_then(|t| t.dyn_into::<HtmlInputElement>().ok());
             if let Some(input) = input {
-                if let Ok(rd) = RegionDisplay::try_from(input.value()) {
+                if let Ok(rd) = RegionDisplay::try_from(input.value().to_uppercase()) {
                     ct_dispatch.reduce_mut(|state| {
                         state.transfer.transfer_region.dest_region = Region::from(&rd);
                     });
