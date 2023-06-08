@@ -27,6 +27,7 @@ div.plate_cell_inner {
 td.plate_cell:hover div.plate_cell_inner {
 	background: black !important;
 }
+
 td.plate_cell.in_transfer div.plate_cell_inner::after {
 	content: "";
 	width: 100%;
@@ -42,11 +43,6 @@ td.plate_cell.in_transfer div.plate_cell_inner::after {
 	);
 }
 
-div.source_plate td.current_select div.plate_cell_inner {
-	background: lightblue !important;
+td.current_select div.plate_cell_inner {
+	border: 4px solid black;
 }
-div.dest_plate td.current_select div.plate_cell_inner {
-	background: lightcoral !important;
-}
-
-
