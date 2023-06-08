@@ -4,7 +4,7 @@ use serde::Deserialize;
 use serde::Serialize;
 use uuid::Uuid;
 
-#[derive(PartialEq, Clone, Default, Debug, Serialize, Deserialize)]
+#[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 #[non_exhaustive]
 pub struct Transfer {
     pub source_id: Uuid,
@@ -14,6 +14,19 @@ pub struct Transfer {
     pub transfer_region: TransferRegion,
     #[serde(default = "default_volume")]
     pub volume: f32,
+}
+
+impl Default for Transfer {
+    fn default() -> Self {
+        Transfer {
+            source_id: Default::default(),
+            dest_id: Default::default(),
+            name: "New Transfer".to_string(),
+            id: Default::default(),
+            transfer_region: Default::default(),
+            volume: 2.5f32,
+        }
+    }
 }
 
 fn default_volume() -> f32 {
