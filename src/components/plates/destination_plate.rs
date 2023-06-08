@@ -10,7 +10,7 @@ use crate::data::transfer_region::Region;
 
 // Color Palette for the Source Plates, can be changed here
 use crate::components::plates::util::Palettes;
-const PALETTE: super::util::ColorPalette = Palettes::YELLOW_PINK;
+const PALETTE: super::util::ColorPalette = Palettes::RAINBOW;
 
 use super::super::transfer_menu::RegionDisplay;
 
