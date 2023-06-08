@@ -12,7 +12,7 @@ use crate::data::transfer_region::Region;
 use crate::components::plates::util::Palettes;
 const PALETTE: super::util::ColorPalette = Palettes::RAINBOW;
 
-use super::super::transfer_menu::RegionDisplay;
+use super::super::transfer_menu::{RegionDisplay, num_to_letters};
 
 #[derive(Properties, PartialEq)]
 pub struct DestinationPlateProps {
@@ -97,8 +97,17 @@ pub fn DestinationPlate(props: &DestinationPlateProps) -> Html {
 
     let mouseleave_callback = Callback::clone(&mouseup_callback);
 
+    let column_header = {
+        let headers = (1..=props.destination_plate.plate.size().1)
+            .map(|j| {
+                html! {<th>{j}</th>}
+            })
+            .collect::<Html>();
+        html!{<tr><th />{ headers }</tr>}
+    };
     let rows = (1..=props.destination_plate.plate.size().0)
         .map(|i| {
+            let row_header = html! {<th>{num_to_letters(i)}</th>};
             let row = (1..=props.destination_plate.plate.size().1).map(|j| {
             html! {
                 <DestPlateCell i={i} j={j}
@@ -111,7 +120,7 @@ pub fn DestinationPlate(props: &DestinationPlateProps) -> Html {
         }).collect::<Html>();
             html! {
                 <tr>
-                    { row }
+                    { row_header }{ row }
                 </tr>
             }
         })
@@ -126,7 +135,7 @@ pub fn DestinationPlate(props: &DestinationPlateProps) -> Html {
             onmouseleave={move |e| {
                 mouseleave_callback.emit(e);
             }}>
-                { rows }
+            { column_header }{ rows }
             </table>
         </div>
     }

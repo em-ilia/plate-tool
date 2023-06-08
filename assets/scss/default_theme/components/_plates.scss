@@ -13,6 +13,11 @@ table, tr, td {
 	user-select: none; /* Prevents dragging issue */
 	border-spacing: 0px;
 }
+th {
+	font-size: 0.5em;
+}
+
+
 td.plate_cell {
 	height: 2.3vmin;
 	background: none;
