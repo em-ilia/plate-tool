@@ -41,20 +41,15 @@ impl Store for MainState {
 impl MainState {
     pub fn _purge_transfers(&mut self) {
         // Removes any transfers for which the associated plates are gone
-        self.transfers = self
-            .transfers
-            .iter()
-            .filter(|tr| {
-                self.source_plates
+        self.transfers.retain(|tr| {
+            self.source_plates
+                .iter()
+                .any(|spi| spi.get_uuid() == tr.source_id)
+                && self
+                    .destination_plates
                     .iter()
-                    .any(|spi| spi.get_uuid() == tr.source_id)
-                    && self
-                        .destination_plates
-                        .iter()
-                        .any(|dpi| dpi.get_uuid() == tr.dest_id)
-            })
-            .map(|tr| tr.clone())
-            .collect();
+                    .any(|dpi| dpi.get_uuid() == tr.dest_id)
+        });
     }
 
     pub fn add_source_plate(&mut self, plate: PlateInstance) {

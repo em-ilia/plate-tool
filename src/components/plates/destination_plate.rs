@@ -27,8 +27,6 @@ pub fn DestinationPlate(props: &DestinationPlateProps) -> Html {
     let m_start_handle: UseStateHandle<Option<(u8, u8)>> = use_state_eq(|| None);
     let m_end_handle: UseStateHandle<Option<(u8, u8)>> = use_state_eq(|| None);
     let m_stat_handle: UseStateHandle<bool> = use_state_eq(|| false);
-    let m_start = m_start_handle.clone();
-    let m_end = m_end_handle.clone();
 
     if !(*m_stat_handle) {
         let (pt1, pt2) = match ct_state.transfer.transfer_region.dest_region {
@@ -46,12 +44,12 @@ pub fn DestinationPlate(props: &DestinationPlateProps) -> Html {
         let m_stat_handle = m_stat_handle.clone();
 
         Callback::from(move |(i, j, t)| match t {
-            MouseEventType::MOUSEDOWN => {
+            MouseEventType::Mousedown => {
                 m_start_handle.set(Some((i, j)));
                 m_end_handle.set(Some((i, j)));
                 m_stat_handle.set(true);
             }
-            MouseEventType::MOUSEENTER => {
+            MouseEventType::Mouseenter => {
                 if *m_stat_handle {
                     m_end_handle.set(Some((i, j)));
                 }
@@ -79,7 +77,6 @@ pub fn DestinationPlate(props: &DestinationPlateProps) -> Html {
     let mouseup_callback = {
         let m_start_handle = m_start_handle.clone();
         let m_end_handle = m_end_handle.clone();
-        let m_stat_handle = m_stat_handle.clone();
 
         Callback::from(move |_: MouseEvent| {
             m_stat_handle.set(false);
@@ -111,10 +108,10 @@ pub fn DestinationPlate(props: &DestinationPlateProps) -> Html {
             let row = (1..=props.destination_plate.plate.size().1).map(|j| {
             html! {
                 <DestPlateCell i={i} j={j}
-                selected={super::source_plate::in_rect(*m_start.clone(), *m_end.clone(), (i,j))}
+                selected={super::source_plate::in_rect(*m_start_handle.clone(), *m_end_handle.clone(), (i,j))}
                 mouse={mouse_callback.clone()}
                 in_transfer={destination_wells.contains(&(i,j))}
-                color={color_map.get(&(i,j)).map(|x| *x).and_then(|y| Some((y,color_counter)))}
+                color={color_map.get(&(i,j)).copied().map(|y| (y,color_counter))}
                 />
             }
         }).collect::<Html>();
@@ -143,8 +140,8 @@ pub fn DestinationPlate(props: &DestinationPlateProps) -> Html {
 
 #[derive(Debug)]
 pub enum MouseEventType {
-    MOUSEDOWN,
-    MOUSEENTER,
+    Mousedown,
+    Mouseenter,
 }
 
 #[derive(Properties, PartialEq)]
@@ -173,15 +170,15 @@ fn DestPlateCell(props: &DestPlateCellProps) -> Html {
     };
     let mouse = Callback::clone(&props.mouse);
     let mouse2 = Callback::clone(&props.mouse);
-    let (i, j) = (props.i.clone(), props.j.clone());
+    let (i, j) = (props.i, props.j);
 
     html! {
         <td class={classes!("plate_cell", selected_class, in_transfer_class)}
             onmousedown={move |_| {
-                mouse.emit((i,j, MouseEventType::MOUSEDOWN))
+                mouse.emit((i,j, MouseEventType::Mousedown))
             }}
             onmouseenter={move |_| {
-                mouse2.emit((i,j, MouseEventType::MOUSEENTER))
+                mouse2.emit((i,j, MouseEventType::Mouseenter))
             }}>
             <div class="plate_cell_inner"
             style={format!("background: rgba({},{},{},1);", color[0], color[1], color[2])}/>

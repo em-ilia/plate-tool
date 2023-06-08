@@ -56,7 +56,6 @@ pub fn MainWindow() -> Html {
 
     let new_button_callback = {
         let main_dispatch = main_dispatch.clone();
-        let ct_dispatch = ct_dispatch.clone();
         Callback::from(move |_| {
             let window = web_sys::window().unwrap();
             let confirm =
@@ -73,12 +72,12 @@ pub fn MainWindow() -> Html {
     let export_csv_button_callback = {
         let main_state = main_state.clone();
         Callback::from(move |_| {
-            if main_state.transfers.len() == 0 {
+            if main_state.transfers.is_empty() {
                 web_sys::window()
                     .unwrap()
                     .alert_with_message("No transfers to export.")
                     .unwrap();
-                return ();
+                return;
             }
             web_sys::window().unwrap().alert_with_message("CSV export is currently not importable. Export as JSON if you'd like to back up your work!").unwrap();
             if let Ok(csv) = state_to_csv(&main_state) {
@@ -88,7 +87,6 @@ pub fn MainWindow() -> Html {
     };
 
     let export_json_button_callback = {
-        let main_state = main_state.clone();
         Callback::from(move |_| {
             if let Ok(json) = serde_json::to_string(&main_state) {
                 save_str(&json, "plate-tool-state.json");
@@ -102,7 +100,6 @@ pub fn MainWindow() -> Html {
     };
 
     let import_json_button_callback = {
-        let main_dispatch = main_dispatch.clone();
         Callback::from(move |_| {
             let window = web_sys::window().unwrap();
             let document = window.document().unwrap();
@@ -119,7 +116,7 @@ pub fn MainWindow() -> Html {
                     modal.remove();
                 })
             };
-            modal.set_onclose(Some(&onclose_callback.as_ref().unchecked_ref()));
+            modal.set_onclose(Some(onclose_callback.as_ref().unchecked_ref()));
             onclose_callback.forget();
 
             let form = document
@@ -164,14 +161,14 @@ pub fn MainWindow() -> Html {
                                         modal.close();
                                     }
                                 });
-                                fr.set_onload(Some(&onload.as_ref().unchecked_ref()));
+                                fr.set_onload(Some(onload.as_ref().unchecked_ref()));
                                 onload.forget(); // Magic (don't touch)
                             }
                         }
                     }
                 })
             };
-            input.set_onchange(Some(&input_callback.as_ref().unchecked_ref()));
+            input.set_onchange(Some(input_callback.as_ref().unchecked_ref()));
             input_callback.forget(); // Magic straight from the docs, don't touch :(
 
             modal.append_child(&form).unwrap();

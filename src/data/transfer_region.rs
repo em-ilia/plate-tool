@@ -69,9 +69,9 @@ impl TransferRegion {
                         wells.push((i, j))
                     }
                 }
-                return wells;
+                wells
             }
-            Region::Point(p) => return vec![p],
+            Region::Point(p) => vec![p],
         }
     }
 
@@ -90,9 +90,10 @@ impl TransferRegion {
         }
         // log::debug!("GDW END.");
 
-        return wells;
+        wells
     }
 
+    #[allow(clippy::type_complexity)] // Resolving gives inherent associated type error
     pub fn calculate_map(&self) -> Box<dyn Fn((u8, u8)) -> Option<Vec<(u8, u8)>> + '_> {
         // By validating first, we have a stronger guarantee that
         // this function will not panic. :)
@@ -121,30 +122,30 @@ impl TransferRegion {
         // Non-replicate transfers:
         match self.dest_region {
             Region::Point((x, y)) => {
-                return Box::new(move |(i, j)| {
+                Box::new(move |(i, j)| {
                     if source_wells.contains(&(i, j)) {
                         // Validity here already checked by self.validate()
                         Some(vec![(
                             x + i
                                 .checked_sub(source_ul.0)
                                 .expect("Point cannot have been less than UL")
-                                .checked_div(il_source.0.abs() as u8)
+                                .checked_div(il_source.0.unsigned_abs())
                                 .expect("Source interleave cannot be 0")
-                                .mul(il_dest.0.abs() as u8),
+                                .mul(il_dest.0.unsigned_abs()),
                             y + j
                                 .checked_sub(source_ul.1)
                                 .expect("Point cannot have been less than UL")
-                                .checked_div(il_source.1.abs() as u8)
+                                .checked_div(il_source.1.unsigned_abs())
                                 .expect("Source interleave cannot be 0")
-                                .mul(il_dest.1.abs() as u8),
+                                .mul(il_dest.1.unsigned_abs()),
                         )])
                     } else {
                         None
                     }
-                });
+                })
             }
             Region::Rect(c1, c2) => {
-                return Box::new(move |(i, j)| {
+                Box::new(move |(i, j)| {
                     if source_wells.contains(&(i, j)) {
                         let possible_destination_wells = create_dense_rectangle(&c1, &c2);
                         let (d_ul, d_br) = standardize_rectangle(&c1, &c2);
@@ -160,58 +161,60 @@ impl TransferRegion {
                         );
                         let N_s = (
                             // Number of used source wells
-                            (s_dims.0 + il_source.0.abs() as u8 - 1)
-                                .div_euclid(il_source.0.abs() as u8),
-                            (s_dims.1 + il_source.1.abs() as u8 - 1)
-                                .div_euclid(il_source.1.abs() as u8),
+                            (s_dims.0 + il_source.0.unsigned_abs() - 1)
+                                .div_euclid(il_source.0.unsigned_abs()),
+                            (s_dims.1 + il_source.1.unsigned_abs() - 1)
+                                .div_euclid(il_source.1.unsigned_abs()),
                         );
                         let count = (
                             // How many times can we replicate?
                             (1..)
                                 .position(|n| {
-                                    n * N_s.0 * il_dest.0.abs() as u8 - il_dest.0.abs() as u8 + 1
+                                    n * N_s.0 * il_dest.0.unsigned_abs() - il_dest.0.unsigned_abs()
+                                        + 1
                                         > d_dims.0
                                 })
                                 .unwrap() as u8,
                             (1..)
                                 .position(|n| {
-                                    n * N_s.1 * il_dest.1.abs() as u8 - il_dest.1.abs() as u8 + 1
+                                    n * N_s.1 * il_dest.1.unsigned_abs() - il_dest.1.unsigned_abs()
+                                        + 1
                                         > d_dims.1
                                 })
                                 .unwrap() as u8,
                         );
                         let i = i
                             .saturating_sub(s_ul.0)
-                            .saturating_div(il_source.0.abs() as u8);
+                            .saturating_div(il_source.0.unsigned_abs());
                         let j = j
                             .saturating_sub(s_ul.1)
-                            .saturating_div(il_source.1.abs() as u8);
+                            .saturating_div(il_source.1.unsigned_abs());
 
                         Some(
                             possible_destination_wells
                                 .into_iter()
                                 .filter(|(x, _)| {
                                     x.checked_sub(d_ul.0).unwrap()
-                                        % (N_s.0 * il_dest.0.abs() as u8) // Counter along x
-                                    == ((il_dest.0.abs() as u8 *i))
-                                        % (N_s.0 * il_dest.0.abs() as u8)
+                                        % (N_s.0 * il_dest.0.unsigned_abs()) // Counter along x
+                                    == (il_dest.0.unsigned_abs() *i)
+                                        % (N_s.0 * il_dest.0.unsigned_abs())
                                 })
                                 .filter(|(_, y)| {
                                     y.checked_sub(d_ul.1).unwrap()
-                                        % (N_s.1 * il_dest.1.abs() as u8) // Counter along u
-                                    == ((il_dest.1.abs() as u8 *j))
-                                        % (N_s.1 * il_dest.1.abs() as u8)
+                                        % (N_s.1 * il_dest.1.unsigned_abs()) // Counter along u
+                                    == (il_dest.1.unsigned_abs() *j)
+                                        % (N_s.1 * il_dest.1.unsigned_abs())
                                 })
                                 .filter(|(x, y)| {
                                     // How many times have we replicated? < How many are we allowed
                                     // to replicate?
                                     x.checked_sub(d_ul.0)
                                         .unwrap()
-                                        .div_euclid(N_s.0 * il_dest.0.abs() as u8)
+                                        .div_euclid(N_s.0 * il_dest.0.unsigned_abs())
                                         < count.0
                                         && y.checked_sub(d_ul.1)
                                             .unwrap()
-                                            .div_euclid(N_s.1 * il_dest.1.abs() as u8)
+                                            .div_euclid(N_s.1 * il_dest.1.unsigned_abs())
                                             < count.1
                                 })
                                 .collect(),
@@ -219,7 +222,7 @@ impl TransferRegion {
                     } else {
                         None
                     }
-                });
+                })
             }
         }
     }
@@ -265,7 +268,7 @@ impl TransferRegion {
         // Should *not* happen in this function---otherwise
         // we'd get a nasty recursive loop.
 
-        return Ok(());
+        Ok(())
     }
 }
 
@@ -280,7 +283,7 @@ fn create_dense_rectangle(c1: &(u8, u8), c2: &(u8, u8)) -> Vec<(u8, u8)> {
         }
     }
 
-    return points;
+    points
 }
 
 fn standardize_rectangle(c1: &(u8, u8), c2: &(u8, u8)) -> ((u8, u8), (u8, u8)) {
@@ -288,10 +291,10 @@ fn standardize_rectangle(c1: &(u8, u8), c2: &(u8, u8)) -> ((u8, u8), (u8, u8)) {
     let upper_left_j = u8::min(c1.1, c2.1);
     let bottom_right_i = u8::max(c1.0, c2.0);
     let bottom_right_j = u8::max(c1.1, c2.1);
-    return (
+    (
         (upper_left_i, upper_left_j),
         (bottom_right_i, bottom_right_j),
-    );
+    )
 }
 
 #[cfg(debug_assertions)]
@@ -308,12 +311,12 @@ impl fmt::Display for TransferRegion {
         for i in 1..=source_dims.0 {
             for j in 1..=source_dims.1 {
                 if source_wells.contains(&(i, j)) {
-                    source_string.push_str("x")
+                    source_string.push('x')
                 } else {
-                    source_string.push_str(".")
+                    source_string.push('.')
                 }
             }
-            source_string.push_str("\n");
+            source_string.push('\n');
         }
         write!(f, "{}", source_string)?;
 
@@ -324,12 +327,12 @@ impl fmt::Display for TransferRegion {
         for i in 1..=dest_dims.0 {
             for j in 1..=dest_dims.1 {
                 if dest_wells.contains(&(i, j)) {
-                    dest_string.push_str("x")
+                    dest_string.push('x')
                 } else {
-                    dest_string.push_str(".")
+                    dest_string.push('.')
                 }
             }
-            dest_string.push_str("\n");
+            dest_string.push('\n');
         }
         write!(f, "{}", dest_string)
     }

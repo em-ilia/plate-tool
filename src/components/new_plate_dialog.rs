@@ -18,7 +18,6 @@ pub fn NewPlateDialog(props: &NewPlateDialogProps) -> Html {
     let (_, dispatch) = use_store::<MainState>();
 
     let new_plate_callback = {
-        let dispatch = dispatch.clone();
         let close_callback = props.close_callback.clone();
         Callback::from(move |e: SubmitEvent| {
             e.prevent_default();

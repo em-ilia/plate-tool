@@ -26,10 +26,10 @@ pub fn TransferMenu() -> Html {
             let input = target.and_then(|t| t.dyn_into::<HtmlInputElement>().ok());
             if let Some(input) = input {
                 if input.value() == "" {
-                    return ();
+                    return;
                 } // We do not want empty inputs!
                 ct_dispatch.reduce_mut(|state| {
-                    state.transfer.name = input.value().clone();
+                    state.transfer.name = input.value();
                 });
             }
         })
@@ -145,7 +145,6 @@ pub fn TransferMenu() -> Html {
                 .target()
                 .expect("Event must have target")
                 .dyn_into::<HtmlInputElement>()
-                .ok()
                 .expect("Must have been emitted by input");
             if let Ok(num) = input.value().parse::<f32>() {
                 ct_dispatch.reduce_mut(|state| {
@@ -158,7 +157,6 @@ pub fn TransferMenu() -> Html {
     let new_transfer_button_callback = {
         let main_dispatch = main_dispatch.clone();
         let main_state = main_state.clone();
-        let ct_dispatch = ct_dispatch.clone();
 
         Callback::from(move |_: MouseEvent| {
             main_dispatch.reduce_mut(|state| {
@@ -206,41 +204,35 @@ pub fn TransferMenu() -> Html {
                         });
                     }
                 }
-            } else {
-                if let Some(index) = main_state
-                    .transfers
-                    .iter()
-                    .position(|t| t.get_uuid() == main_state.selected_transfer)
-                {
-                    main_dispatch.reduce_mut(|state| {
-                        state.transfers[index] = ct_state.transfer.clone();
-                    });
-                }
+            } else if let Some(index) = main_state
+                .transfers
+                .iter()
+                .position(|t| t.get_uuid() == main_state.selected_transfer)
+            {
+                main_dispatch.reduce_mut(|state| {
+                    state.transfers[index] = ct_state.transfer.clone();
+                });
             }
         })
     };
 
     let delete_transfer_button_callback = {
-        let main_dispatch = main_dispatch.clone();
-        let main_state = main_state.clone();
         let ct_state = ct_state.clone();
         let new_callback = new_transfer_button_callback.clone();
 
         Callback::from(move |e: MouseEvent| {
             if main_state.selected_transfer.is_nil() {
-                () // Maybe reset transfer?
-            } else {
-                if let Some(index) = main_state
-                    .transfers
-                    .iter()
-                    .position(|t| t.get_uuid() == ct_state.transfer.get_uuid())
-                {
-                    main_dispatch.reduce_mut(|state| {
-                        state.transfers.remove(index);
-                        state.selected_transfer = Uuid::nil();
-                    });
-                    new_callback.emit(e); // We need a new transfer now
-                }
+                // Maybe reset transfer?
+            } else if let Some(index) = main_state
+                .transfers
+                .iter()
+                .position(|t| t.get_uuid() == ct_state.transfer.get_uuid())
+            {
+                main_dispatch.reduce_mut(|state| {
+                    state.transfers.remove(index);
+                    state.selected_transfer = Uuid::nil();
+                });
+                new_callback.emit(e); // We need a new transfer now
             }
         })
     };
@@ -336,15 +328,15 @@ impl TryFrom<String> for RegionDisplay {
             let row_end: u8 = captures[4]
                 .parse::<u8>()
                 .or(Err("Row end failed to parse"))?;
-            return Ok(RegionDisplay {
+            Ok(RegionDisplay {
                 text: value,
                 col_start,
                 row_start,
                 col_end,
                 row_end,
-            });
+            })
         } else {
-            return Err("Regex match failed");
+            Err("Regex match failed")
         }
     }
 }
@@ -393,12 +385,12 @@ fn letters_to_num(letters: &str) -> Option<u8> {
     let mut num: u8 = 0;
     for (i, letter) in letters.chars().rev().enumerate() {
         let n = letter as u8;
-        if n < 65 || n > 90 {
+        if !(65..=90).contains(&n) {
             return None;
         }
         num = num.checked_add((26_i32.pow(i as u32) * (n as i32 - 64)).try_into().ok()?)?;
     }
-    return Some(num);
+    Some(num)
 }
 pub fn num_to_letters(num: u8) -> Option<String> {
     if num == 0 {
@@ -418,7 +410,7 @@ pub fn num_to_letters(num: u8) -> Option<String> {
     }
     text.push((64 + digit2) as char);
 
-    return Some(text.to_string());
+    Some(text.to_string())
 }
 
 #[cfg(test)]

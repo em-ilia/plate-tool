@@ -68,7 +68,7 @@ fn transfer_to_records(
             }
         }
     }
-    return records;
+    records
 }
 
 fn records_to_csv(trs: Vec<TransferRecord>) -> Result<String, Box<dyn Error>> {
@@ -77,5 +77,5 @@ fn records_to_csv(trs: Vec<TransferRecord>) -> Result<String, Box<dyn Error>> {
         wtr.serialize(record)?
     }
     let data = String::from_utf8(wtr.into_inner()?)?;
-    return Ok(data);
+    Ok(data)
 }

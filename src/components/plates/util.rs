@@ -17,9 +17,12 @@ impl ColorPalette {
 
     pub fn get(&self, t: f64) -> [f64; 3] {
         [
-            (self.a[0] + self.b[0] * f64::cos(6.28318 * (self.c[0] * t + self.d[0]))) * 255.0,
-            (self.a[1] + self.b[1] * f64::cos(6.28318 * (self.c[1] * t + self.d[1]))) * 255.0,
-            (self.a[2] + self.b[2] * f64::cos(6.28318 * (self.c[2] * t + self.d[2]))) * 255.0,
+            (self.a[0] + self.b[0] * f64::cos(std::f64::consts::TAU * (self.c[0] * t + self.d[0])))
+                * 255.0,
+            (self.a[1] + self.b[1] * f64::cos(std::f64::consts::TAU * (self.c[1] * t + self.d[1])))
+                * 255.0,
+            (self.a[2] + self.b[2] * f64::cos(std::f64::consts::TAU * (self.c[2] * t + self.d[2])))
+                * 255.0,
         ]
     }
 

@@ -26,7 +26,7 @@ pub fn Tree(props: &TreeProps) -> Html {
             let target: Option<EventTarget> = e.target();
             let li = target.and_then(|t| t.dyn_into::<HtmlElement>().ok());
             if let Some(li) = li {
-                if let Ok(id) = u128::from_str_radix(li.id().as_str(), 10) {
+                if let Ok(id) = li.id().as_str().parse::<u128>() {
                     plate_menu_id.set(Some(Uuid::from_u128(id)));
                 }
             }
@@ -57,7 +57,7 @@ pub fn Tree(props: &TreeProps) -> Html {
             let target: Option<EventTarget> = e.target();
             let li = target.and_then(|t| t.dyn_into::<HtmlElement>().ok());
             if let Some(li) = li {
-                if let Ok(id) = u128::from_str_radix(li.id().as_str(), 10) {
+                if let Ok(id) = li.id().as_str().parse::<u128>() {
                     ct_dispatch.reduce_mut(|state| {
                         state.transfer.transfer_region.source_region = Region::default();
                         state.transfer.transfer_region.dest_region = Region::default();
@@ -78,7 +78,7 @@ pub fn Tree(props: &TreeProps) -> Html {
             let target: Option<EventTarget> = e.target();
             let li = target.and_then(|t| t.dyn_into::<HtmlElement>().ok());
             if let Some(li) = li {
-                if let Ok(id) = u128::from_str_radix(li.id().as_str(), 10) {
+                if let Ok(id) = li.id().as_str().parse::<u128>() {
                     ct_dispatch.reduce_mut(|state| {
                         state.transfer.transfer_region.source_region = Region::default();
                         state.transfer.transfer_region.dest_region = Region::default();
@@ -94,14 +94,12 @@ pub fn Tree(props: &TreeProps) -> Html {
 
     let transfer_select_callback = {
         let main_state = main_state.clone();
-        let main_dispatch = main_dispatch.clone();
-        let ct_dispatch = ct_dispatch.clone();
 
         Callback::from(move |e: MouseEvent| {
             let target: Option<EventTarget> = e.target();
             let li = target.and_then(|t| t.dyn_into::<HtmlElement>().ok());
             if let Some(li) = li {
-                if let Ok(id) = u128::from_str_radix(li.id().as_str(), 10) {
+                if let Ok(id) = li.id().as_str().parse::<u128>() {
                     let id = Uuid::from_u128(id);
                     if let Some(transfer) = main_state
                         .transfers
@@ -218,7 +216,7 @@ fn PlateInfoModal(props: &PlateInfoModalProps) -> Html {
         .source_plates
         .iter()
         .find(|spi| spi.get_uuid() == props.id);
-    if plate == None {
+    if plate.is_none() {
         plate = main_state
             .destination_plates
             .iter()
@@ -234,7 +232,6 @@ fn PlateInfoModal(props: &PlateInfoModalProps) -> Html {
     };
 
     let rename_onchange = {
-        let main_dispatch = main_dispatch.clone();
         let id = props.id;
         Callback::from(move |e: Event| {
             log::debug!("Changed name");
