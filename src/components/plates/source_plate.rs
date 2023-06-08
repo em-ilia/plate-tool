@@ -12,7 +12,7 @@ use crate::data::transfer_region::Region;
 use crate::components::plates::util::Palettes;
 const PALETTE: super::util::ColorPalette = Palettes::RAINBOW;
 
-use super::super::transfer_menu::{RegionDisplay, num_to_letters};
+use super::super::transfer_menu::{num_to_letters, RegionDisplay};
 
 #[derive(PartialEq, Properties)]
 pub struct SourcePlateProps {
@@ -104,7 +104,7 @@ pub fn SourcePlate(props: &SourcePlateProps) -> Html {
                 html! {<th>{j}</th>}
             })
             .collect::<Html>();
-        html!{<tr><th />{ headers }</tr>}
+        html! {<tr><th />{ headers }</tr>}
     };
     let rows = (1..=props.source_plate.plate.size().0)
         .map(|i| {

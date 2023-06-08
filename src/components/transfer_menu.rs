@@ -25,7 +25,9 @@ pub fn TransferMenu() -> Html {
             let target: Option<EventTarget> = e.target();
             let input = target.and_then(|t| t.dyn_into::<HtmlInputElement>().ok());
             if let Some(input) = input {
-                if input.value() == "" {return ()} // We do not want empty inputs!
+                if input.value() == "" {
+                    return ();
+                } // We do not want empty inputs!
                 ct_dispatch.reduce_mut(|state| {
                     state.transfer.name = input.value().clone();
                 });
