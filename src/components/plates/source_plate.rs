@@ -113,7 +113,7 @@ pub fn SourcePlate(props: &SourcePlateProps) -> Html {
                         selected={in_rect(*m_start_handle.clone(), *m_end_handle.clone(), (i,j))}
                         mouse={mouse_callback.clone()}
                         in_transfer={source_wells.contains(&(i,j))}
-                        color={color_map.get(&(i,j)).copied().map(|y| (y,color_counter))}
+                        color={color_map.get(&(i,j)).copied()}
                         />
                     }
                 })
@@ -149,7 +149,7 @@ pub struct SourcePlateCellProps {
     selected: bool,
     mouse: Callback<(u8, u8, MouseEventType)>,
     in_transfer: Option<bool>,
-    color: Option<(u8, u8)>,
+    color: Option<u8>,
 }
 #[derive(Debug)]
 pub enum MouseEventType {
@@ -168,7 +168,7 @@ fn SourcePlateCell(props: &SourcePlateCellProps) -> Html {
         _ => None,
     };
     let color = match props.color {
-        Some(num) => PALETTE.get_u8(num.0, num.1),
+        Some(num) => PALETTE.get_u8(num),
         None => [255.0, 255.0, 255.0],
     };
     let mouse = Callback::clone(&props.mouse);

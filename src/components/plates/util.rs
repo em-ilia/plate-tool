@@ -26,13 +26,9 @@ impl ColorPalette {
         ]
     }
 
-    pub fn get_u8(&self, t: u8, n: u8) -> [f64; 3] {
+    pub fn get_u8(&self, t: u8) -> [f64; 3] {
         assert!(t > 0, "t must be greater than zero!");
-        assert!(n > 0, "There cannot be zero points!");
-        if n == 1 {
-            return self.get(0.5f64);
-        }
-        self.get((t - 1) as f64 / (n - 1) as f64)
+        self.get((2f64.powi(-1*t.ilog2() as i32)) as f64 * (t as f64 + 0.5f64)-1.0f64)
     }
 }
 
