@@ -26,7 +26,7 @@ div.plate_cell_inner {
 	aspect-ratio: 1 / 1;
 	height: 90%;
 	border-radius: 50%;
-	border: 2px solid black;
+	border: 1px solid black;
 }
 td.plate_cell:hover div.plate_cell_inner {
 	background: black !important;
@@ -43,10 +43,10 @@ td.plate_cell.in_transfer div.plate_cell_inner::after {
 			rgba(0,0,0,0.8),
 			rgba(0,0,0,0.8) 2px,
 			transparent 2px,
-			transparent 4px
+			transparent 5px
 	);
 }
 
 td.current_select div.plate_cell_inner {
-	border: 4px solid black;
+	border: 3px solid black;
 }
