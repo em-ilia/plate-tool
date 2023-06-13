@@ -6,6 +6,7 @@ use yewdux::prelude::*;
 
 use crate::components::states::{CurrentTransfer, MainState};
 use crate::data::plate_instances::PlateInstance;
+use crate::data::transfer::Transfer;
 use crate::data::transfer_region::Region;
 
 // Color Palette for the Source Plates, can be changed here
@@ -58,36 +59,19 @@ pub fn DestinationPlate(props: &DestinationPlateProps) -> Html {
         })
     };
 
-    let mut color_counter: u8 = 0;
-    let color_map = {
+    let transfer_map = {
         let ts = main_state
             .transfers
             .iter()
             .filter(|t| t.dest_id == props.destination_plate.get_uuid());
-        let mut color_map: HashMap<(u8, u8), u8> = HashMap::new();
-        for t in ts {
-            color_counter += 1;
-            let dws = t.transfer_region.get_destination_wells();
-            for dw in dws {
-                color_map.insert(dw, color_counter);
-            }
-        }
-        color_map
-    };
-
-    let tooltip_map = {
-        let ts = main_state
-            .transfers
-            .iter()
-            .filter(|t| t.dest_id == props.destination_plate.get_uuid());
-        let mut tooltip_map: HashMap<(u8,u8), Vec<String>> = HashMap::new();
+        let mut tooltip_map: HashMap<(u8,u8), Vec<&Transfer>> = HashMap::new();
         for t in ts {
             let dws = t.transfer_region.get_destination_wells();
             for dw in dws {
                 if let Some(val) = tooltip_map.get_mut(&dw) {
-                    val.push(t.name.clone());
+                    val.push(t);
                 } else {
-                    tooltip_map.insert(dw, vec![t.name.clone()]);
+                    tooltip_map.insert(dw, vec![t]);
                 }
             }
         }
@@ -131,10 +115,14 @@ pub fn DestinationPlate(props: &DestinationPlateProps) -> Html {
                 selected={super::source_plate::in_rect(*m_start_handle.clone(), *m_end_handle.clone(), (i,j))}
                 mouse={mouse_callback.clone()}
                 in_transfer={destination_wells.contains(&(i,j))}
-                color={color_map.get(&(i,j)).copied()}
+                color={transfer_map.get(&(i,j))
+                    .and_then(|t| t.last())
+                    .map(|t| PALETTE.get_uuid(t.get_uuid()))
+                }
                 cell_height={props.cell_height}
-                title={if let Some(names) = tooltip_map.get(&(i,j)) {
-                    Some(format!("Used by: {}", names.join(", ")))
+                title={if let Some(transfers) = transfer_map.get(&(i,j)) {
+                    Some(format!("Used by: {}", transfers.iter().map(|t| t.name.clone())
+                                    .collect::<Vec<_>>().join(", ")))
                 } else { None }}
                 />
             }
@@ -176,7 +164,7 @@ pub struct DestPlateCellProps {
     pub selected: bool,
     pub mouse: Callback<(u8, u8, MouseEventType)>,
     pub in_transfer: Option<bool>,
-    color: Option<u8>,
+    color: Option<[f64; 3]>,
     cell_height: f64,
     title: Option<String>,
 }
@@ -192,7 +180,7 @@ fn DestPlateCell(props: &DestPlateCellProps) -> Html {
         _ => None,
     };
     let color = match props.color {
-        Some(num) => PALETTE.get_u8(num),
+        Some(num) => num,
         None => [255.0, 255.0, 255.0],
     };
     let mouse = Callback::clone(&props.mouse);
