@@ -18,6 +18,7 @@ use super::super::transfer_menu::{num_to_letters, RegionDisplay};
 pub struct SourcePlateProps {
     pub source_plate: PlateInstance,
     pub destination_plate: PlateInstance,
+    pub cell_height: f64,
 }
 
 #[function_component]
@@ -114,6 +115,7 @@ pub fn SourcePlate(props: &SourcePlateProps) -> Html {
                         mouse={mouse_callback.clone()}
                         in_transfer={source_wells.contains(&(i,j))}
                         color={color_map.get(&(i,j)).copied()}
+                        cell_height={props.cell_height}
                         />
                     }
                 })
@@ -150,6 +152,7 @@ pub struct SourcePlateCellProps {
     mouse: Callback<(u8, u8, MouseEventType)>,
     in_transfer: Option<bool>,
     color: Option<u8>,
+    cell_height: f64,
 }
 #[derive(Debug)]
 pub enum MouseEventType {
@@ -177,6 +180,7 @@ fn SourcePlateCell(props: &SourcePlateCellProps) -> Html {
 
     html! {
         <td class={classes!("plate_cell", selected_class, in_transfer_class)}
+            style={format!("height: {}px;", props.cell_height)}
             id={format!("color={:?}", props.color)}
             onmousedown={move |_| {
                 mouse.emit((i,j, MouseEventType::Mousedown))
