@@ -44,7 +44,7 @@ pub struct Palettes;
 impl Palettes {
     pub const RAINBOW: ColorPalette = ColorPalette {
         a: [0.500, 0.500, 0.500],
-        b: [0.500, 0.500, 0.500],
+        b: [0.700, 0.700, 0.700],
         c: [0.800, 0.800, 0.800],
         d: [0.000, 0.333, 0.667],
     };
