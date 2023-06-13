@@ -97,7 +97,7 @@ pub fn DestinationPlate(props: &DestinationPlateProps) -> Html {
     let column_header = {
         let headers = (1..=props.destination_plate.plate.size().1)
             .map(|j| {
-                html! {<th>{j}</th>}
+                html! {<th>{format!("{:0>2}", j)}</th>}
             })
             .collect::<Html>();
         html! {<tr><th />{ headers }</tr>}
