@@ -28,9 +28,15 @@ pub fn NewPlateDialog(props: &NewPlateDialogProps) -> Html {
                 if let Ok(form_data) = FormData::new_with_form(&form) {
                     let name = form_data.get("new_plate_name").as_string().unwrap();
                     let format = match form_data.get("plate_format").as_string().unwrap().as_str() {
-                        "384" => PlateFormat::W384,
+                        "6" => PlateFormat::W6,
+                        "12" => PlateFormat::W12,
+                        "24" => PlateFormat::W24,
+                        "48" => PlateFormat::W48,
                         "96" => PlateFormat::W96,
-                        _ => PlateFormat::W6,
+                        "384" => PlateFormat::W384,
+                        "1536" => PlateFormat::W1536,
+                        "3456" => PlateFormat::W3456,
+                        _ => unreachable!(),
                     };
                     if let Some(pt_string) = form_data.get("new_plate_type").as_string() {
                         let plate_type = match pt_string.as_str() {
@@ -89,8 +95,14 @@ pub fn NewPlateDialog(props: &NewPlateDialogProps) -> Html {
             <form onsubmit={new_plate_callback}>
             <input type="text" name="new_plate_name" placeholder="Name"/>
             <select name="plate_format">
+                <option value="6">{"6"}</option>
+                <option value="12">{"12"}</option>
+                <option value="24">{"24"}</option>
+                <option value="48">{"48"}</option>
                 <option value="96">{"96"}</option>
-                <option value="384">{"384"}</option>
+                <option value="384" selected={true}>{"384"}</option>
+                <option value="1536">{"1536"}</option>
+                <option value="3456">{"3456"}</option>
             </select>
             <input type="radio" name="new_plate_type" id="npt_src" value="src" />
             <label for="npt_src">{"Source"}</label>
