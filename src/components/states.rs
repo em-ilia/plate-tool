@@ -39,7 +39,7 @@ impl Store for MainState {
 }
 
 impl MainState {
-    pub fn _purge_transfers(&mut self) {
+    fn purge_transfers(&mut self) {
         // Removes any transfers for which the associated plates are gone
         self.transfers.retain(|tr| {
             self.source_plates
@@ -67,6 +67,7 @@ impl MainState {
             .position(|spi| spi.get_uuid() == id)
         {
             self.source_plates.swap_remove(index);
+            self.purge_transfers();
         }
         if let Some(index) = self
             .destination_plates
@@ -74,6 +75,7 @@ impl MainState {
             .position(|dpi| dpi.get_uuid() == id)
         {
             self.destination_plates.swap_remove(index);
+            self.purge_transfers();
         }
     }
     pub fn rename_plate(&mut self, id: Uuid, new_name: &str) {
