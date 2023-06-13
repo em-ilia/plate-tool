@@ -174,8 +174,9 @@ pub fn TransferMenu() -> Html {
         let main_dispatch = main_dispatch.clone();
         let main_state = main_state.clone();
         let ct_state = ct_state.clone();
+        let new_transfer_button_callback = new_transfer_button_callback.clone();
 
-        Callback::from(move |_: MouseEvent| {
+        Callback::from(move |e: MouseEvent| {
             log::debug!("Button pressed");
             if main_state.selected_transfer.is_nil() {
                 if let Some(spi) = main_state
@@ -202,6 +203,9 @@ pub fn TransferMenu() -> Html {
                                 .expect("An element should have just been added")
                                 .get_uuid();
                         });
+                        new_transfer_button_callback.emit(e); // If we just made a new transfer,
+                                                              // then we should make another on
+                                                              // save.
                     }
                 }
             } else if let Some(index) = main_state
