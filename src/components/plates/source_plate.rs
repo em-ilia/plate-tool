@@ -55,6 +55,25 @@ pub fn SourcePlate(props: &SourcePlateProps) -> Html {
         color_map
     };
 
+    let tooltip_map = {
+        let ts = main_state
+            .transfers
+            .iter()
+            .filter(|t| t.source_id == props.source_plate.get_uuid());
+        let mut tooltip_map: HashMap<(u8,u8), Vec<String>> = HashMap::new();
+        for t in ts {
+            let sws = t.transfer_region.get_source_wells();
+            for sw in sws {
+                if let Some(val) = tooltip_map.get_mut(&sw) {
+                    val.push(t.name.clone());
+                } else {
+                    tooltip_map.insert(sw, vec![t.name.clone()]);
+                }
+            }
+        }
+        tooltip_map
+    };
+
     let source_wells = ct_state.transfer.transfer_region.get_source_wells();
 
     let mouse_callback = {
@@ -118,6 +137,9 @@ pub fn SourcePlate(props: &SourcePlateProps) -> Html {
                         in_transfer={source_wells.contains(&(i,j))}
                         color={color_map.get(&(i,j)).copied()}
                         cell_height={props.cell_height}
+                        title={if let Some(names) = tooltip_map.get(&(i,j)) {
+                            Some(format!("Used by: {}", names.join(", ")))
+                        } else { None }}
                         />
                     }
                 })
@@ -156,6 +178,7 @@ pub struct SourcePlateCellProps {
     in_transfer: Option<bool>,
     color: Option<u8>,
     cell_height: f64,
+    title: Option<String>,
 }
 #[derive(Debug)]
 pub enum MouseEventType {
@@ -192,7 +215,10 @@ fn SourcePlateCell(props: &SourcePlateCellProps) -> Html {
                 mouse2.emit((i,j, MouseEventType::Mouseenter))
             }}>
             <div class="plate_cell_inner"
-            style={format!("background: rgba({},{},{},1);", color[0], color[1], color[2])}/>
+            style={format!("background: rgba({},{},{},1);", color[0], color[1], color[2])}
+            title={if let Some(text) = &props.title {
+                text.clone()
+            } else {"".to_string()}}/>
         </td>
     }
 }
