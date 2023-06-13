@@ -126,7 +126,8 @@ pub fn DestinationPlate(props: &DestinationPlateProps) -> Html {
         .collect::<Html>();
 
     html! {
-        <div class="dest_plate">
+        <div class={classes!{"dest_plate", 
+            "W".to_owned()+&props.source_plate.plate.plate_format.to_string()}}>
             <table
             onmouseup={move |e| {
                 mouseup_callback.emit(e);

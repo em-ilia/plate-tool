@@ -50,3 +50,20 @@ td.plate_cell.in_transfer div.plate_cell_inner::after {
 td.current_select div.plate_cell_inner {
 	border: 3px solid black;
 }
+
+
+// Styles for specific plate types:
+
+.W1536 {
+	th {
+		font-size: 0.9rem;
+	}
+}
+
+.W3456 {
+	th {
+		font-size: 0.9rem;
+		line-height: 0px;
+		padding-bottom: 0.4rem;
+	}
+}
