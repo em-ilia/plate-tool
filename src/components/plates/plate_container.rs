@@ -16,10 +16,15 @@ pub struct PlateContainerProps {
 
 #[function_component]
 pub fn PlateContainer(props: &PlateContainerProps) -> Html {
-        let height = web_sys::window().unwrap().inner_height().unwrap().as_f64().unwrap();
         let cell_height = {
+            let height = web_sys::window().unwrap().inner_height().unwrap().as_f64().unwrap();
+            let width = web_sys::window().unwrap().inner_width().unwrap().as_f64().unwrap();
             if let (Some(src_d), Some(dest_d)) = (&props.source_dims, &props.destination_dims) {
-                (0.78*height)/(src_d.plate.size().0 + dest_d.plate.size().0) as f64
+                let h =
+                (0.78*height)/(src_d.plate.size().0 + dest_d.plate.size().0) as f64;
+                let w =
+                (0.90*width)/(src_d.plate.size().1 + dest_d.plate.size().1) as f64;
+                f64::min(w,h)
             } else {
                 1f64
             }
