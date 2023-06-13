@@ -99,7 +99,9 @@ pub fn SourcePlate(props: &SourcePlateProps) -> Html {
     let column_header = {
         let headers = (1..=props.source_plate.plate.size().1)
             .map(|j| {
-                html! {<th>{format!("{:0>2}", j)}</th>}
+                html! {<th>
+                    {format!("{:0>2}", j)}
+                    </th>}
             })
             .collect::<Html>();
         html! {<tr><th />{ headers }</tr>}
