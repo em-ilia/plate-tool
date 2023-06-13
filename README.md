@@ -43,7 +43,6 @@ To add a new plate, click the "New Plate" button:
  
  When all of the settings are to your liking, click the "Save" button.
  Note that it now appears in the "Transfers" section of the list pane.
- To move on to your next transfer, now click the "New" button.
 
  ### Modifying and deleting transfers
  If you already saved a transfer and would like to change it,
