@@ -94,6 +94,8 @@ To add a new plate, click the "New Plate" button:
 Plate tool is hosted [here](https://ilia.moe/cool-stuff/plate-tool/) for your convenience.
 However, you're absolutely welcome to host your own instance (even locally).
 Here's how:
+(_Note:_ If you run Windows you're probably best off doing the following in WSL2)
+
 1. Make sure you have a working Rust toolchain
     1. Installing `rustup` is the easiest way to do this. See [their website](https://rustup.rs/),
   or consult documentation provided by your distribution.
