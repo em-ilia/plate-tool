@@ -64,7 +64,7 @@ pub fn DestinationPlate(props: &DestinationPlateProps) -> Html {
             .transfers
             .iter()
             .filter(|t| t.dest_id == props.destination_plate.get_uuid());
-        let mut tooltip_map: HashMap<(u8,u8), Vec<&Transfer>> = HashMap::new();
+        let mut tooltip_map: HashMap<(u8, u8), Vec<&Transfer>> = HashMap::new();
         for t in ts {
             let dws = t.transfer_region.get_destination_wells();
             for dw in dws {
@@ -120,10 +120,8 @@ pub fn DestinationPlate(props: &DestinationPlateProps) -> Html {
                     .map(|t| PALETTE.get_uuid(t.get_uuid()))
                 }
                 cell_height={props.cell_height}
-                title={if let Some(transfers) = transfer_map.get(&(i,j)) {
-                    Some(format!("Used by: {}", transfers.iter().map(|t| t.name.clone())
-                                    .collect::<Vec<_>>().join(", ")))
-                } else { None }}
+                title={transfer_map.get(&(i,j)).map(|transfers| format!("Used by: {}", transfers.iter().map(|t| t.name.clone())
+                                    .collect::<Vec<_>>().join(", ")))}
                 />
             }
         }).collect::<Html>();
@@ -136,7 +134,7 @@ pub fn DestinationPlate(props: &DestinationPlateProps) -> Html {
         .collect::<Html>();
 
     html! {
-        <div class={classes!{"dest_plate", 
+        <div class={classes!{"dest_plate",
             "W".to_owned()+&props.source_plate.plate.plate_format.to_string()}}>
             <table
             onmouseup={move |e| {
@@ -179,10 +177,7 @@ fn DestPlateCell(props: &DestPlateCellProps) -> Html {
         Some(true) => Some("in_transfer"),
         _ => None,
     };
-    let color = match props.color {
-        Some(num) => num,
-        None => [255.0, 255.0, 255.0],
-    };
+    let color = props.color.unwrap_or([255.0, 255.0, 255.0]);
     let mouse = Callback::clone(&props.mouse);
     let mouse2 = Callback::clone(&props.mouse);
     let (i, j) = (props.i, props.j);

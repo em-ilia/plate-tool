@@ -26,9 +26,9 @@ impl ColorPalette {
         ]
     }
 
-    pub fn get_u8(&self, t: u8) -> [f64; 3] {
+    pub fn _get_u8(&self, t: u8) -> [f64; 3] {
         assert!(t > 0, "t must be greater than zero!");
-        self.get((2f64.powi(-1*t.ilog2() as i32)) as f64 * (t as f64 + 0.5f64)-1.0f64)
+        self.get((2f64.powi(-(t.ilog2() as i32))) * (t as f64 + 0.5f64) - 1.0f64)
     }
 
     pub fn get_uuid(&self, t: uuid::Uuid) -> [f64; 3] {

@@ -44,7 +44,7 @@ pub fn SourcePlate(props: &SourcePlateProps) -> Html {
             .transfers
             .iter()
             .filter(|t| t.source_id == props.source_plate.get_uuid());
-        let mut tooltip_map: HashMap<(u8,u8), Vec<&Transfer>> = HashMap::new();
+        let mut tooltip_map: HashMap<(u8, u8), Vec<&Transfer>> = HashMap::new();
         for t in ts {
             let sws = t.transfer_region.get_source_wells();
             for sw in sws {
@@ -103,8 +103,8 @@ pub fn SourcePlate(props: &SourcePlateProps) -> Html {
         let headers = (1..=props.source_plate.plate.size().1)
             .map(|j| {
                 html! {<th>
-                    {format!("{:0>2}", j)}
-                    </th>}
+                {format!("{:0>2}", j)}
+                </th>}
             })
             .collect::<Html>();
         html! {<tr><th />{ headers }</tr>}
@@ -124,10 +124,8 @@ pub fn SourcePlate(props: &SourcePlateProps) -> Html {
                             .map(|t| PALETTE.get_uuid(t.get_uuid()))
                         }
                         cell_height={props.cell_height}
-                        title={if let Some(transfers) = transfer_map.get(&(i,j)) {
-                            Some(format!("Used by: {}", transfers.iter().map(|t| t.name.clone())
-                                    .collect::<Vec<_>>().join(", ")))
-                        } else { None }}
+                        title={transfer_map.get(&(i,j)).map(|transfers| format!("Used by: {}", transfers.iter().map(|t| t.name.clone())
+                                    .collect::<Vec<_>>().join(", ")))}
                         />
                     }
                 })
@@ -184,10 +182,7 @@ fn SourcePlateCell(props: &SourcePlateCellProps) -> Html {
         Some(true) => Some("in_transfer"),
         _ => None,
     };
-    let color = match props.color {
-        Some(num) => num,
-        None => [255.0, 255.0, 255.0],
-    };
+    let color = props.color.unwrap_or([255.0, 255.0, 255.0]);
     let mouse = Callback::clone(&props.mouse);
     let mouse2 = Callback::clone(&props.mouse);
     let (i, j) = (props.i, props.j);
@@ -279,7 +274,7 @@ mod tests {
         let c2 = (10, 10);
         let pt1 = (0, 0);
         let pt2 = (15, 15);
-        assert_eq!(false, in_rect(Some(c1), Some(c2), pt1));
-        assert_eq!(false, in_rect(Some(c1), Some(c2), pt2));
+        assert!(!in_rect(Some(c1), Some(c2), pt1));
+        assert!(!in_rect(Some(c1), Some(c2), pt2));
     }
 }

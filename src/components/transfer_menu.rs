@@ -454,7 +454,7 @@ mod tests {
             Some("BJ".to_string())
         );
         for i in 1..=255 {
-            assert_eq!(letters_to_num(&num_to_letters(i as u8).unwrap()), Some(i));
+            assert_eq!(letters_to_num(&num_to_letters(i).unwrap()), Some(i));
         }
     }
 
