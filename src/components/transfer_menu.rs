@@ -39,6 +39,9 @@ pub fn TransferMenu() -> Html {
         let ct_dispatch = ct_dispatch.clone();
 
         Callback::from(move |e: Event| {
+            if matches!(ct_dispatch.get().transfer.transfer_region.source_region, Region::Custom(_)) {
+                return; // Do nothing here!
+            }
             let target: Option<EventTarget> = e.target();
             let input = target.and_then(|t| t.dyn_into::<HtmlInputElement>().ok());
             if let Some(input) = input {
@@ -250,6 +253,8 @@ pub fn TransferMenu() -> Html {
                 onchange={on_name_change}
                 value={ct_state.transfer.name.clone()}/>
             </div>
+            // Anything below here is not rendered when a Custom transfer is selected
+            if !matches!(&ct_state.transfer.transfer_region.source_region, Region::Custom(_)) {
             <div>
                 <label for="src_region"><h3>{"Source Region:"}</h3></label>
                 <input type="text" name="src_region"
@@ -291,6 +296,7 @@ pub fn TransferMenu() -> Html {
             onchange={on_volume_change}
             value={ct_state.transfer.volume.to_string()}/>
             </div>
+            }
             <div id="controls">
             <input type="button" name="new_transfer" onclick={new_transfer_button_callback}
             value={"New"} />
