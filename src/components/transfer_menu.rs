@@ -353,6 +353,7 @@ impl From<&Region> for RegionDisplay {
             Region::Rect(c1, c2) => RegionDisplay::try_from((c1.0, c1.1, c2.0, c2.1))
                 .ok()
                 .unwrap(),
+            Region::Custom(_) => RegionDisplay { text: "CUSTOM".to_string(), col_start: 0, row_start: 0, col_end: 0, row_end: 0 }
         }
     }
 }

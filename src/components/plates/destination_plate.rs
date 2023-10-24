@@ -34,6 +34,7 @@ pub fn DestinationPlate(props: &DestinationPlateProps) -> Html {
         let (pt1, pt2) = match ct_state.transfer.transfer_region.dest_region {
             Region::Point((x, y)) => ((x, y), (x, y)),
             Region::Rect(c1, c2) => (c1, c2),
+            Region::Custom(_) => ((0,0), (0,0)),
         };
         m_start_handle.set(Some(pt1));
         m_end_handle.set(Some(pt2));

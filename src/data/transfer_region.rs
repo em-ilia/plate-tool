@@ -3,9 +3,16 @@ use serde::{Deserialize, Serialize};
 use super::plate::Plate;
 
 #[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug)]
+pub struct CustomRegion {
+    src: Vec<(u8, u8)>,
+    dest: Vec<(u8, u8)>,
+}
+
+#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug)]
 pub enum Region {
     Rect((u8, u8), (u8, u8)),
     Point((u8, u8)),
+    Custom(CustomRegion),
 }
 impl Default for Region {
     fn default() -> Self {
@@ -49,7 +56,7 @@ impl Default for TransferRegion {
 
 impl TransferRegion {
     pub fn get_source_wells(&self) -> Vec<(u8, u8)> {
-        match self.source_region {
+        match &self.source_region {
             Region::Rect(c1, c2) => {
                 let mut wells = Vec::<(u8, u8)>::new();
                 let (ul, br) = standardize_rectangle(&c1, &c2);
@@ -71,7 +78,8 @@ impl TransferRegion {
                 }
                 wells
             }
-            Region::Point(p) => vec![p],
+            Region::Point(p) => vec![*p],
+            Region::Custom(c) => c.src.clone(),
         }
     }
 
@@ -112,6 +120,7 @@ impl TransferRegion {
         let source_corners: ((u8, u8), (u8, u8)) = match self.source_region {
             Region::Point((x, y)) => ((x, y), (x, y)),
             Region::Rect(c1, c2) => (c1, c2),
+            Region::Custom(_) => ((0, 0), (0, 0)),
         };
         let (source_ul, _) = standardize_rectangle(&source_corners.0, &source_corners.1);
         // This map is not necessarily injective or surjective,
@@ -120,7 +129,7 @@ impl TransferRegion {
         // and simple then we *will* have injectivity.
 
         // Non-replicate transfers:
-        match self.dest_region {
+        match &self.dest_region {
             Region::Point((x, y)) => {
                 Box::new(move |(i, j)| {
                     if source_wells.contains(&(i, j)) {
@@ -224,6 +233,22 @@ impl TransferRegion {
                     }
                 })
             }
+            Region::Custom(c) => Box::new(move |(i, j)| {
+                let src = c.src.clone();
+                let dest = c.dest.clone();
+
+                let points: Vec<(u8, u8)> = src
+                    .iter()
+                    .enumerate()
+                    .filter(|(_index, (x, y))| *x == i && *y == j)
+                    .map(|(index, _)| dest[index])
+                    .collect();
+                if points.is_empty() {
+                    None
+                } else {
+                    Some(points)
+                }
+            }),
         }
     }
 
@@ -256,7 +281,8 @@ impl TransferRegion {
                     // log::debug!("s1.1: {}, max.1: {}", s1.1, source_max.1);
                     return Err("Source region is out-of-bounds! (Too wide)");
                 }
-            }
+            },
+            Region::Custom(_) => return Ok(()),
         }
 
         if il_source.0 == 0 || il_dest.1 == 0 {
