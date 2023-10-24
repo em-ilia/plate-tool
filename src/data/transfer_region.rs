@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use super::plate::Plate;
 
-#[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Debug)]
+#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug)]
 pub enum Region {
     Rect((u8, u8), (u8, u8)),
     Point((u8, u8)),
@@ -24,7 +24,7 @@ impl TryFrom<Region> for ((u8, u8), (u8, u8)) {
     }
 }
 
-#[derive(PartialEq, Eq, Clone, Copy, Serialize, Deserialize, Debug)]
+#[derive(PartialEq, Eq, Clone, Serialize, Deserialize, Debug)]
 pub struct TransferRegion {
     pub source_plate: Plate,
     pub source_region: Region, // Even if it is just a point, we don't want corners.

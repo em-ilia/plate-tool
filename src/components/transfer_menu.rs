@@ -192,7 +192,7 @@ pub fn TransferMenu() -> Html {
                         let new_transfer = Transfer::new(
                             spi.clone(),
                             dpi.clone(),
-                            ct_state.transfer.transfer_region,
+                            ct_state.transfer.transfer_region.clone(),
                             ct_state.transfer.name.clone(),
                         );
                         main_dispatch.reduce_mut(|state| {
