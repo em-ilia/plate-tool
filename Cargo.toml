@@ -10,9 +10,9 @@ yew = { version = "0.20.0", features = ["csr"] }
 yewdux = "0.9"
 wasm-bindgen = "0.2"
 web-sys = { version = "0.3", features = ["FormData", "HtmlFormElement",
-																				 "HtmlDialogElement", "Blob", "Url", "Window",
-																				 "HtmlAnchorElement", "ReadableStream",
-																				 "FileReader"] }
+ "HtmlDialogElement", "Blob", "Url", "Window",
+ "HtmlAnchorElement", "ReadableStream",
+ "FileReader"] }
 js-sys = "0.3"
 log = "0.4"
 wasm-logger = "0.2"
