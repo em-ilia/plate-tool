@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+use crate::components::transfer_menu::RegionDisplay;
+
 use super::plate::Plate;
 
 #[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug)]
@@ -28,6 +30,22 @@ impl TryFrom<Region> for ((u8, u8), (u8, u8)) {
             // Should consider returning a degenerate rectangle here instead
             Err("Cannot convert this region to a rectangle, it was a point.")
         }
+    }
+}
+impl Region {
+    pub fn new_custom(transfers: &Vec<((u8, u8), (u8, u8))>) -> Self {
+        let mut src_pts: Vec<(u8, u8)> = Vec::with_capacity(transfers.len());
+        let mut dest_pts: Vec<(u8, u8)> = Vec::with_capacity(transfers.len());
+
+        for transfer in transfers {
+            src_pts.push(transfer.0);
+            dest_pts.push(transfer.1);
+        }
+
+        Region::Custom(CustomRegion {
+            src: src_pts,
+            dest: dest_pts,
+        })
     }
 }
 
@@ -281,7 +299,7 @@ impl TransferRegion {
                     // log::debug!("s1.1: {}, max.1: {}", s1.1, source_max.1);
                     return Err("Source region is out-of-bounds! (Too wide)");
                 }
-            },
+            }
             Region::Custom(_) => return Ok(()),
         }
 

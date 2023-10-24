@@ -350,6 +350,37 @@ impl TryFrom<String> for RegionDisplay {
         }
     }
 }
+impl TryFrom<&str> for RegionDisplay {
+    type Error = &'static str;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        lazy_static! {
+            static ref REGION_REGEX: Regex = Regex::new(r"([A-Z]+)(\d+):([A-Z]+)(\d+)").unwrap();
+        }
+        if let Some(captures) = REGION_REGEX.captures(&value) {
+            if captures.len() != 5 {
+                return Err("Not enough capture groups");
+            }
+            let col_start = letters_to_num(&captures[1]).ok_or("Column start failed to parse")?;
+            let col_end = letters_to_num(&captures[3]).ok_or("Column end failed to parse")?;
+            let row_start: u8 = captures[2]
+                .parse::<u8>()
+                .or(Err("Row start failed to parse"))?;
+            let row_end: u8 = captures[4]
+                .parse::<u8>()
+                .or(Err("Row end failed to parse"))?;
+            Ok(RegionDisplay {
+                text: value.to_string(),
+                col_start,
+                row_start,
+                col_end,
+                row_end,
+            })
+        } else {
+            Err("Regex match failed")
+        }
+    }
+}
 impl From<&Region> for RegionDisplay {
     fn from(value: &Region) -> Self {
         match *value {
@@ -392,9 +423,10 @@ impl TryFrom<(u8, u8, u8, u8)> for RegionDisplay {
         })
     }
 }
-fn letters_to_num(letters: &str) -> Option<u8> {
+pub fn letters_to_num(letters: &str) -> Option<u8> {
     let mut num: u8 = 0;
-    for (i, letter) in letters.chars().rev().enumerate() {
+    for (i, letter) in letters.to_ascii_uppercase().chars().rev().enumerate() {
+        log::debug!("{}, {}", i, letter);
         let n = letter as u8;
         if !(65..=90).contains(&n) {
             return None;

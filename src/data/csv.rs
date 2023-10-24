@@ -2,23 +2,23 @@ use crate::components::states::MainState;
 use crate::components::transfer_menu::num_to_letters;
 use crate::data::transfer::Transfer;
 
-use serde::Serialize;
+use serde::{Serialize, Deserialize};
 use std::error::Error;
 
-#[derive(Serialize, Debug)]
-struct TransferRecord {
-    #[serde(rename = "Source Plate Barcode")]
-    source_plate: String,
+#[derive(Serialize, Deserialize, Debug)]
+pub struct TransferRecord {
+    #[serde(rename = "Source Plate")]
+    pub source_plate: String,
     #[serde(rename = "Source Well")]
-    source_well: String,
-    #[serde(rename = "Destination Plate Barcode")]
-    destination_plate: String,
+    pub source_well: String,
+    #[serde(rename = "Dest Plate")]
+    pub destination_plate: String,
     #[serde(rename = "Destination Well")]
-    destination_well: String,
-    #[serde(rename = "Volume")]
-    volume: f32,
+    pub destination_well: String,
+    #[serde(rename = "Transfer Volume")]
+    pub volume: f32,
     #[serde(rename = "Concentration")]
-    concentration: Option<f32>,
+    pub concentration: Option<f32>,
 }
 
 pub fn state_to_csv(state: &MainState) -> Result<String, Box<dyn Error>> {
