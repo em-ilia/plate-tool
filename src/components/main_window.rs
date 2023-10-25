@@ -337,6 +337,7 @@ pub fn MainWindow() -> Html {
                                             .dyn_into::<HtmlButtonElement>()
                                             .unwrap();
                                         submit.set_value("Submit");
+                                        submit.set_inner_text("Submit");
                                         let submit_callback = {
                                             let main_dispatch = main_dispatch.clone();
                                             let from_source = from_source.clone();
