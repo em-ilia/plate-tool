@@ -105,3 +105,6 @@ Here's how:
     - Run `cargo install --locked trunk`
 3. Clone this repository using git
 4. Enter the project directory and run `trunk serve`
+     - You may need to check where `cargo` is installing binaries by default. For me, they're at `~/.cargo/bin`.
+       If trunk is not automatically placed in your path, you would then run `/your/path/to/.cargo/bin/trunk serve`.
+     - You can instead run `trunk build --release` for a more performant binary.
