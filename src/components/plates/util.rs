@@ -2,6 +2,10 @@
 // https://iquilezles.org/articles/palettes/
 // http://dev.thi.ng/gradients/
 
+use rand::prelude::*;
+use rand::rngs::SmallRng;
+use lazy_static::lazy_static;
+
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub struct ColorPalette {
     a: [f64; 3],
@@ -32,8 +36,9 @@ impl ColorPalette {
     }
 
     pub fn get_uuid(&self, t: uuid::Uuid) -> [f64; 3] {
-        log::debug!("{}", t.as_u128() as f64 / (u128::MAX) as f64);
-        self.get(t.as_u128() as f64 / (u128::MAX) as f64)
+        // self.get(t.as_u128() as f64 / (u128::MAX) as f64)
+        let mut r = SmallRng::seed_from_u64(t.as_u128() as u64);
+        self.get(r.gen_range(0.0..1.0f64))
     }
 }
 
@@ -54,4 +59,5 @@ impl Palettes {
         c: [0.100, 0.500, 0.360],
         d: [0.000, 0.000, 0.650],
     };
+
 }

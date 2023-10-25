@@ -555,9 +555,11 @@ name = "plate-tool"
 version = "0.1.0"
 dependencies = [
  "csv",
+ "getrandom",
  "js-sys",
  "lazy_static",
  "log",
+ "rand",
  "regex",
  "serde",
  "serde_json",
