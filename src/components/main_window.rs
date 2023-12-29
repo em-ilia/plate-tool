@@ -49,6 +49,15 @@ pub fn MainWindow() -> Html {
         });
     }
 
+    let toggle_in_transfer_hashes_callback = {
+        let main_dispatch = main_dispatch.clone();
+        Callback::from(move |_| {
+            main_dispatch.reduce_mut(|state| {
+                state.preferences.in_transfer_hashes ^= true;
+            })
+        })
+    };
+
     let new_plate_dialog_is_open = use_state_eq(|| false);
     let new_plate_dialog_callback = {
         let new_plate_dialog_is_open = new_plate_dialog_is_open.clone();
@@ -473,6 +482,15 @@ pub fn MainWindow() -> Html {
                     <div>
                         <button onclick={import_json_button_callback}>{"Import from JSON"}</button>
                         <button onclick={import_transfer_csv_callback}>{"Import Transfer from CSV"}</button>
+                    </div>
+                </div>
+            </div>
+            <div class="dropdown">
+                <button>{"Options"}</button>
+                <div class="dropdown-sub">
+                    <button>{"Styles"}</button>
+                    <div>
+                    <button onclick={toggle_in_transfer_hashes_callback}>{"Toggle in transfer hashes"}</button>
                     </div>
                 </div>
             </div>
