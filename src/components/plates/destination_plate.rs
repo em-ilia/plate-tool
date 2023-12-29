@@ -107,6 +107,11 @@ pub fn DestinationPlate(props: &DestinationPlateProps) -> Html {
 
     let mouseleave_callback = Callback::clone(&mouseup_callback);
 
+
+    let screenshot_callback = Callback::from(|_| {
+        let _ = js_sys::eval("copy_screenshot_dest()");
+    });
+
     let column_header = {
         let headers = (1..=props.destination_plate.plate.size().1)
             .map(|j| {
@@ -143,7 +148,8 @@ pub fn DestinationPlate(props: &DestinationPlateProps) -> Html {
         .collect::<Html>();
 
     html! {
-        <div class={classes!{"dest_plate",
+        <div ondblclick={screenshot_callback}
+        class={classes!{"dest_plate",
             "W".to_owned()+&props.source_plate.plate.plate_format.to_string()}}>
             <table
             onmouseup={move |e| {
