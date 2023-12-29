@@ -13,6 +13,17 @@ pub struct CurrentTransfer {
     pub transfer: Transfer,
 }
 
+#[derive(PartialEq, Clone, Copy, Serialize, Deserialize)]
+pub struct Preferences {
+    pub in_transfer_hashes: bool,
+}
+
+impl Default for Preferences {
+    fn default() -> Self {
+        Self { in_transfer_hashes: true }
+    }
+}
+
 #[derive(Default, PartialEq, Clone, Serialize, Deserialize)]
 #[non_exhaustive]
 pub struct MainState {
@@ -22,6 +33,9 @@ pub struct MainState {
     pub selected_source_plate: Uuid,
     pub selected_dest_plate: Uuid,
     pub selected_transfer: Uuid,
+
+    #[serde(default)]
+    pub preferences: Preferences,
 }
 
 impl Store for MainState {
