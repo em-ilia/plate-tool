@@ -490,7 +490,7 @@ pub fn MainWindow() -> Html {
                 <div class="dropdown-sub">
                     <button>{"Styles"}</button>
                     <div>
-                    <button onclick={toggle_in_transfer_hashes_callback}>{"Toggle in transfer hashes"}</button>
+                    <button onclick={toggle_in_transfer_hashes_callback}>{"Toggle transfer hashes"}</button>
                     </div>
                 </div>
             </div>
