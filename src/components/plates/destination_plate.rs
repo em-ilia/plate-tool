@@ -41,6 +41,14 @@ pub fn DestinationPlate(props: &DestinationPlateProps) -> Html {
     }
     let destination_wells = ct_state.transfer.transfer_region.get_destination_wells();
 
+    let ordered_ids: Vec<uuid::Uuid> = {
+        let mut ids: Vec<uuid::Uuid> = main_state.transfers.clone().iter()
+        .map(|x| x.id)
+        .collect();
+        ids.sort_unstable();
+        ids
+    };
+
     let mouse_callback = {
         let m_start_handle = m_start_handle.clone();
         let m_end_handle = m_end_handle.clone();
@@ -118,7 +126,7 @@ pub fn DestinationPlate(props: &DestinationPlateProps) -> Html {
                 in_transfer={destination_wells.contains(&(i,j))}
                 color={transfer_map.get(&(i,j))
                     .and_then(|t| t.last())
-                    .map(|t| PALETTE.get_uuid(t.get_uuid()))
+                    .map(|t| PALETTE.get_ordered(t.get_uuid(), &ordered_ids))
                 }
                 cell_height={props.cell_height}
                 title={transfer_map.get(&(i,j)).map(|transfers| format!("Used by: {}", transfers.iter().map(|t| t.name.clone())

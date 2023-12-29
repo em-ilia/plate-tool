@@ -5,6 +5,8 @@ use uuid::Uuid;
 #[derive(PartialEq, Clone, Serialize, Deserialize)]
 pub struct PlateInstance {
     pub plate: Plate,
+    #[serde(rename = "id_v7")]
+    #[serde(default = "Uuid::now_v7")]
     id: Uuid,
     pub name: String,
 }
@@ -16,7 +18,7 @@ impl PlateInstance {
                 plate_type: sort,
                 plate_format: format,
             },
-            id: Uuid::new_v4(),
+            id: Uuid::now_v7(),
             name,
         }
     }
@@ -34,7 +36,7 @@ impl From<Plate> for PlateInstance {
     fn from(value: Plate) -> Self {
         PlateInstance {
             plate: value,
-            id: Uuid::new_v4(),
+            id: Uuid::now_v7(),
             name: "New Plate".to_string(),
         }
     }

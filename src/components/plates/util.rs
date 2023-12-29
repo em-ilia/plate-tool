@@ -35,10 +35,23 @@ impl ColorPalette {
         self.get((2f64.powi(-(t.ilog2() as i32))) * (t as f64 + 0.5f64) - 1.0f64)
     }
 
-    pub fn get_uuid(&self, t: uuid::Uuid) -> [f64; 3] {
-        // self.get(t.as_u128() as f64 / (u128::MAX) as f64)
-        let mut r = SmallRng::seed_from_u64(t.as_u128() as u64);
-        self.get(r.gen_range(0.0..1.0f64))
+    // pub fn get_uuid(&self, t: uuid::Uuid) -> [f64; 3] {
+    //     // self.get(t.as_u128() as f64 / (u128::MAX) as f64)
+    //     let mut r = SmallRng::seed_from_u64(t.as_u128() as u64);
+    //     self.get(r.gen_range(0.0..1.0f64))
+    // }
+
+    pub fn get_ordered(&self, t: uuid::Uuid, ordered_uuids: &Vec<uuid::Uuid>)
+        -> [f64; 3] {
+        let index = ordered_uuids.iter().position(|&x| x == t).expect("uuid must be in list of uuids") + 1;
+        return self.get(Self::space_evenly(index))
+    }
+
+    fn space_evenly(x: usize) -> f64 {
+        let e: usize = (x.ilog2() + 1) as usize;
+        let d: usize = (2usize.pow(e as u32)) as usize;
+        let n: usize = (2*x + 1) % d;
+        return (n as f64) / (d as f64);
     }
 }
 

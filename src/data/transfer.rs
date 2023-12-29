@@ -10,7 +10,9 @@ pub struct Transfer {
     pub source_id: Uuid,
     pub dest_id: Uuid,
     pub name: String,
-    id: Uuid,
+    #[serde(rename = "id_v7")]
+    #[serde(default = "Uuid::now_v7")]
+    pub id: Uuid,
     pub transfer_region: TransferRegion,
     #[serde(default = "default_volume")]
     pub volume: f32,
@@ -44,7 +46,7 @@ impl Transfer {
             source_id: source.get_uuid(),
             dest_id: dest.get_uuid(),
             name,
-            id: Uuid::new_v4(),
+            id: Uuid::now_v7(),
             transfer_region: tr,
             volume: 2.5,
         }
