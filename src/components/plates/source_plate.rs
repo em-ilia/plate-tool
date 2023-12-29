@@ -127,7 +127,7 @@ pub fn SourcePlate(props: &SourcePlateProps) -> Html {
                         <SourcePlateCell i={i} j={j}
                         selected={in_rect(*m_start_handle.clone(), *m_end_handle.clone(), (i,j))}
                         mouse={mouse_callback.clone()}
-                        in_transfer={source_wells.contains(&(i,j))}
+                        in_transfer={source_wells.contains(&(i,j)) && main_state.preferences.in_transfer_hashes}
                         color={transfer_map.get(&(i,j))
                             .and_then(|t| t.last())
                             .map(|t| PALETTE.get_ordered(t.get_uuid(), &ordered_ids))
