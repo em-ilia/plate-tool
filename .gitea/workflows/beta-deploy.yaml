@@ -1,0 +1,24 @@
+name: Beta Deploy
+on:
+  push:
+    branches:
+      - beta-release
+
+jobs:
+  Compile-Plate-Tool:
+    runs-on: linux_arm
+    steps:
+      - name: Check out repo code
+        uses: https://github.com/actions/checkout@v4
+        with:
+          ref: "beta-release"
+      - name: Compile plate-tool
+        run: |
+          . "$HOME/.cargo/env"
+          trunk build --release --public-url "cool-stuff/plate-tool-beta/"
+      - name: Transfer files to host server
+        run: |
+          sftp oracle <<< "put -r dist"
+      - name: Deploy plate-tool-beta on host server
+        run: |
+          ssh oracle "sudo rm -rf /usr/share/nginx/html/plate-tool-beta/ && sudo mv dist /usr/share/nginx/html/plate-tool-beta"
