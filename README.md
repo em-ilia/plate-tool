@@ -1,4 +1,4 @@
-# plate-tool (working title)
+# plate-tool
 
 A web-based tool for creating assays for your favorite (acoustic) liquid handler.
 
@@ -98,6 +98,32 @@ To add a new plate, click the "New Plate" button:
  You are welcome to verify (use your browser's developer tools, it should have a network tab)
  that this application does not "phone home".
  Your data is stored locally (unless you choose to export it and distribute it yourself).
+
+### Other Neat Features
+
+ #### Taking Pictures of Plates
+ If you double click on a plate
+ (try to avoid clicking a well since that will change your selection)
+ plate-tool will do some magic to take a screenshot of your plate
+ and deposit it in your clipboard for you.
+ You can then paste this into PowerPoint, GIMP, or whereever else
+ you want a pretty picture of a plate.
+
+ _NOTE:_ I won't guarantee this feature will work in all contexts;
+ it relies on your browser thinking that you have plate-tool open
+ in a "secure context" (localhost or https).
+
+ #### Turn off the in-transfer hashes
+ Have you noticed that when you select a transfer, the wells to
+ be used in that transfer have little diagonal lines over them?
+ Hopefully you have, because this is supposed to happen!
+ However, if you want to take a Pretty Plate Picture (see above),
+ you might want these indicators turned off.
+
+ To disable the indicators, mouse over "Options" (top-left of screen), then "Styles",
+ then click "Toggle transfer hashes".
+ To turn them back on, do the exact same thing.
+
 
 ## Installation
 
