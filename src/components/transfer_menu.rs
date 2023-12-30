@@ -39,6 +39,9 @@ pub fn TransferMenu() -> Html {
         let ct_dispatch = ct_dispatch.clone();
 
         Callback::from(move |e: Event| {
+            if matches!(ct_dispatch.get().transfer.transfer_region.source_region, Region::Custom(_)) {
+                return; // Do nothing here!
+            }
             let target: Option<EventTarget> = e.target();
             let input = target.and_then(|t| t.dyn_into::<HtmlInputElement>().ok());
             if let Some(input) = input {
@@ -192,7 +195,7 @@ pub fn TransferMenu() -> Html {
                         let new_transfer = Transfer::new(
                             spi.clone(),
                             dpi.clone(),
-                            ct_state.transfer.transfer_region,
+                            ct_state.transfer.transfer_region.clone(),
                             ct_state.transfer.name.clone(),
                         );
                         main_dispatch.reduce_mut(|state| {
@@ -250,6 +253,8 @@ pub fn TransferMenu() -> Html {
                 onchange={on_name_change}
                 value={ct_state.transfer.name.clone()}/>
             </div>
+            // Anything below here is not rendered when a Custom transfer is selected
+            if !matches!(&ct_state.transfer.transfer_region.source_region, Region::Custom(_)) {
             <div>
                 <label for="src_region"><h3>{"Source Region:"}</h3></label>
                 <input type="text" name="src_region"
@@ -291,6 +296,7 @@ pub fn TransferMenu() -> Html {
             onchange={on_volume_change}
             value={ct_state.transfer.volume.to_string()}/>
             </div>
+            }
             <div id="controls">
             <input type="button" name="new_transfer" onclick={new_transfer_button_callback}
             value={"New"} />
@@ -344,6 +350,37 @@ impl TryFrom<String> for RegionDisplay {
         }
     }
 }
+impl TryFrom<&str> for RegionDisplay {
+    type Error = &'static str;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        lazy_static! {
+            static ref REGION_REGEX: Regex = Regex::new(r"([A-Z]+)(\d+):([A-Z]+)(\d+)").unwrap();
+        }
+        if let Some(captures) = REGION_REGEX.captures(&value) {
+            if captures.len() != 5 {
+                return Err("Not enough capture groups");
+            }
+            let col_start = letters_to_num(&captures[1]).ok_or("Column start failed to parse")?;
+            let col_end = letters_to_num(&captures[3]).ok_or("Column end failed to parse")?;
+            let row_start: u8 = captures[2]
+                .parse::<u8>()
+                .or(Err("Row start failed to parse"))?;
+            let row_end: u8 = captures[4]
+                .parse::<u8>()
+                .or(Err("Row end failed to parse"))?;
+            Ok(RegionDisplay {
+                text: value.to_string(),
+                col_start,
+                row_start,
+                col_end,
+                row_end,
+            })
+        } else {
+            Err("Regex match failed")
+        }
+    }
+}
 impl From<&Region> for RegionDisplay {
     fn from(value: &Region) -> Self {
         match *value {
@@ -353,6 +390,7 @@ impl From<&Region> for RegionDisplay {
             Region::Rect(c1, c2) => RegionDisplay::try_from((c1.0, c1.1, c2.0, c2.1))
                 .ok()
                 .unwrap(),
+            Region::Custom(_) => RegionDisplay { text: "CUSTOM".to_string(), col_start: 0, row_start: 0, col_end: 0, row_end: 0 }
         }
     }
 }
@@ -385,9 +423,10 @@ impl TryFrom<(u8, u8, u8, u8)> for RegionDisplay {
         })
     }
 }
-fn letters_to_num(letters: &str) -> Option<u8> {
+pub fn letters_to_num(letters: &str) -> Option<u8> {
     let mut num: u8 = 0;
-    for (i, letter) in letters.chars().rev().enumerate() {
+    for (i, letter) in letters.to_ascii_uppercase().chars().rev().enumerate() {
+        log::debug!("{}, {}", i, letter);
         let n = letter as u8;
         if !(65..=90).contains(&n) {
             return None;

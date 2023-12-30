@@ -34,6 +34,7 @@ pub fn SourcePlate(props: &SourcePlateProps) -> Html {
         let (pt1, pt2) = match ct_state.transfer.transfer_region.source_region {
             Region::Point((x, y)) => ((x, y), (x, y)),
             Region::Rect(c1, c2) => (c1, c2),
+            Region::Custom(_) => ((0,0), (0,0)),
         };
         m_start_handle.set(Some(pt1));
         m_end_handle.set(Some(pt2));
@@ -59,6 +60,14 @@ pub fn SourcePlate(props: &SourcePlateProps) -> Html {
     };
 
     let source_wells = ct_state.transfer.transfer_region.get_source_wells();
+
+    let ordered_ids: Vec<uuid::Uuid> = {
+        let mut ids: Vec<uuid::Uuid> = main_state.transfers.clone().iter()
+        .map(|x| x.id)
+        .collect();
+        ids.sort_unstable();
+        ids
+    };
 
     let mouse_callback = {
         let m_start_handle = m_start_handle.clone();
@@ -99,6 +108,10 @@ pub fn SourcePlate(props: &SourcePlateProps) -> Html {
 
     let mouseleave_callback = Callback::clone(&mouseup_callback);
 
+    let screenshot_callback = Callback::from(|_| {
+        let _ = js_sys::eval("copy_screenshot_src()");
+    });
+
     let column_header = {
         let headers = (1..=props.source_plate.plate.size().1)
             .map(|j| {
@@ -118,10 +131,10 @@ pub fn SourcePlate(props: &SourcePlateProps) -> Html {
                         <SourcePlateCell i={i} j={j}
                         selected={in_rect(*m_start_handle.clone(), *m_end_handle.clone(), (i,j))}
                         mouse={mouse_callback.clone()}
-                        in_transfer={source_wells.contains(&(i,j))}
+                        in_transfer={source_wells.contains(&(i,j)) && main_state.preferences.in_transfer_hashes}
                         color={transfer_map.get(&(i,j))
                             .and_then(|t| t.last())
-                            .map(|t| PALETTE.get_uuid(t.get_uuid()))
+                            .map(|t| PALETTE.get_ordered(t.get_uuid(), &ordered_ids))
                         }
                         cell_height={props.cell_height}
                         title={transfer_map.get(&(i,j)).map(|transfers| format!("Used by: {}", transfers.iter().map(|t| t.name.clone())
@@ -139,7 +152,8 @@ pub fn SourcePlate(props: &SourcePlateProps) -> Html {
         .collect::<Html>();
 
     html! {
-        <div class={classes!{"source_plate",
+        <div ondblclick={screenshot_callback}
+        class={classes!{"source_plate",
         "W".to_owned()+&props.source_plate.plate.plate_format.to_string()}}>
             <table
             onmouseup={move |e| {

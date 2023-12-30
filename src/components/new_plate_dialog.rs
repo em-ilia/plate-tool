@@ -99,8 +99,8 @@ pub fn NewPlateDialog(props: &NewPlateDialogProps) -> Html {
                 <option value="12">{"12"}</option>
                 <option value="24">{"24"}</option>
                 <option value="48">{"48"}</option>
-                <option value="96">{"96"}</option>
-                <option value="384" selected={true}>{"384"}</option>
+                <option value="96" selected={true}>{"96"}</option>
+                <option value="384">{"384"}</option>
                 <option value="1536">{"1536"}</option>
                 <option value="3456">{"3456"}</option>
             </select>
