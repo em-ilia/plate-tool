@@ -1,16 +1,17 @@
 function copy_screenshot(el) {
 	html2canvas(el).then((canvas) => {
 		console.log("Copying image to clipboard");
-		let data = canvas.toDataURL();
-
-		const textArea = document.createElement("textarea");
-		textArea.value = data;
-
-		document.body.prepend(textArea);
-		textArea.select();
-
-		document.execCommand('copy');
-		document.body.removeChild(textArea);
+		canvas.toBlob((b) => {
+			try {
+				navigator.clipboard.write([
+					new ClipboardItem({
+						'image/png': b
+					})
+				]);
+			} catch (e) {
+				console.error("Failed to copy!");
+			}
+		});
 	});
 }
 
